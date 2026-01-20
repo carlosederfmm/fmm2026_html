@@ -7,7 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- TASK 3.2.1: Importação do Cliente Global (Configurado para Manaus) -->
+    <script src="assets/js/supabase_client.js"></script>
 
     <script>
         tailwind.config = {
@@ -110,9 +113,7 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://panxfescmzjdltthreqy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbnhmZXNjbXpqZGx0dGhyZXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTA5NDMsImV4cCI6MjA4MjYyNjk0M30.jSZVhw2TFD52zRV4NZUGUeXKBHedWXcdH7w_fXeoGhA';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        // TASK 3.2.1: Repetitividade removida. O objeto 'supabaseClient' agora vem do arquivo global.
 
         function showToast(text, type = 'info') {
             const toast = document.getElementById('toast');
@@ -135,6 +136,7 @@
             lucide.createIcons();
 
             try {
+                // 'supabaseClient' está disponível globalmente através do assets/js/supabase_client.js
                 const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (authError) throw authError;
 
@@ -146,7 +148,6 @@
 
                 if (perfError || !perfil) throw new Error("Perfil não encontrado.");
 
-                // CORREÇÃO DAS ROTAS CONFORME ESQUEMA DE PASTAS
                 const destinos = {
                     'diretor': 'coordenador/principal/dashboard_coordenador.html',
                     'coordenador': 'coordenador/principal/dashboard_coordenador.html',

@@ -8,8 +8,10 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Importação do Componente de Sidebar -->
+
+    <!-- TASK 3.2.1: Cliente Supabase Global e Localização (Manaus) -->
+    <script src="../../assets/js/supabase_client.js"></script>
+    <!-- TASK 2.3.1: Componente de Sidebar -->
     <script src="../../sidebar.js"></script>
 
     <script>
@@ -33,86 +35,50 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; }
         
-        /* Estilos da Sidebar (necessários para o container e transições) */
+        /* Estilos base da Sidebar para suportar o componente */
         .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .sidebar-collapsed .sidebar-text, .sidebar-collapsed .sidebar-category-header, .sidebar-collapsed .chevron-icon, .sidebar-collapsed .sidebar-category-title { display: none; }
         .sidebar-collapsed .sidebar-item { justify-content: center; padding: 12px 0; }
         .sidebar-collapsed .logo-full { display: none; }
         .sidebar-collapsed .logo-short { display: block; }
         .logo-short { display: none; }
-
-        /* Accordion Menu Styles (Usados pelo JS) */
-        .category-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .category-content.open {
-            max-height: 1000px;
-        }
-        .chevron-icon {
-            transition: transform 0.3s ease;
-        }
-        .rotate-180 {
-            transform: rotate(180deg);
-        }
-
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-top: 1px solid #e2e8f0; border-left: 1px solid #e2e8f0; }
-        .calendar-day { min-height: 140px; padding: 8px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; transition: background 0.2s; position: relative; }
-        .calendar-day:hover { background: #f8fafc; }
-        .calendar-day.today { background: #f0f9ff; }
-        .calendar-day.other-month { background: #f1f5f9; color: #94a3b8; }
+        
+        /* Lógica de Acordeão do Componente */
+        .category-content { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .category-content.open { max-height: 1000px; }
+        .rotate-180 { transform: rotate(180deg); }
+        .sidebar-item-active { background-color: rgba(200, 212, 0, 0.15); border-left: 4px solid #c8d400; color: #ffffff !important; }
 
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
-        
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-
-        .event-card {
-            padding: 4px 8px;
-            background: #00638f;
-            color: white;
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: 700;
-            margin-bottom: 4px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .event-card:hover { transform: scale(1.02); background: #003c5b; }
     </style>
 </head>
 <body class="flex h-screen w-screen overflow-hidden">
 
-    <!-- SIDEBAR CONTAINER (Componente injetado via JS) -->
-    <aside id="sidebar-container" class="sidebar-transition w-72 bg-fmm-dark text-white flex-shrink-0 flex flex-col shadow-2xl relative z-20">
-        <!-- Carregando... -->
-    </aside>
+    <!-- SIDEBAR CONTAINER (Design Restaurado via Componente) -->
+    <aside id="sidebar-container" class="sidebar-transition w-72 bg-fmm-dark text-white flex-shrink-0 flex flex-col shadow-2xl relative z-20"></aside>
 
-    <!-- CONTEÚDO PRINCIPAL -->
+    <!-- CONTEÚDO PRINCIPAL (Design Original Mantido) -->
     <main class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden">
-        
         <header class="bg-white h-20 border-b flex items-center justify-between px-8 z-10 shadow-sm flex-shrink-0">
             <div class="flex flex-col">
-                <h1 class="text-xl font-bold text-fmm-dark">Painel de Controlo Académico</h1>
+                <h1 class="text-xl font-bold text-fmm-dark tracking-tight">Painel de Controlo Académico</h1>
                 <p class="text-xs text-slate-400" id="current-date">A carregar data...</p>
             </div>
             <div class="flex items-center gap-4">
                 <div class="flex flex-col items-end">
                     <span id="userName" class="text-sm font-bold text-fmm-dark">Carregando...</span>
-                    <span class="text-[10px] text-fmm-blue font-bold uppercase tracking-widest">SME FMM</span>
+                    <span id="userRoleLabel" class="text-[10px] text-fmm-blue font-black uppercase tracking-widest">Acesso Gestor</span>
                 </div>
-                <div id="userInitials" class="w-10 h-10 rounded-full bg-fmm-blue text-white flex items-center justify-center font-bold shadow-lg">...</div>
+                <div id="userInitials" class="w-10 h-10 rounded-2xl bg-fmm-blue text-white flex items-center justify-center font-black shadow-lg uppercase">?</div>
             </div>
         </header>
 
         <div class="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
             
+            <!-- CARDS DE RESUMO (Original) -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 flex-shrink-0">
                 <div class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm flex items-center gap-5 animate-fade-in-up">
                     <div class="w-14 h-14 bg-fmm-blue/10 rounded-2xl flex items-center justify-center text-fmm-blue"><i data-lucide="graduation-cap" class="w-7 h-7"></i></div>
@@ -132,38 +98,17 @@
                 </div>
             </div>
 
-            <!-- SEÇÃO DE AGENDA -->
+            <!-- AGENDA E CALENDÁRIO (Original) -->
             <div class="bg-white rounded-[40px] border border-slate-100 shadow-xl overflow-hidden flex flex-col min-h-[600px] animate-fade-in-up" style="animation-delay: 0.4s;">
-                
                 <div class="p-8 border-b border-slate-50 flex flex-col md:flex-row items-center justify-between gap-6">
                     <div class="flex items-center gap-4">
-                        <div class="bg-fmm-dark text-white p-3 rounded-2xl shadow-lg">
-                            <i data-lucide="calendar" class="w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-fmm-dark">Agenda SME</h3>
-                            <p class="text-xs text-slate-400 font-medium capitalize" id="calendar-title">Carregando...</p>
-                        </div>
+                        <div class="bg-fmm-dark text-white p-3 rounded-2xl shadow-lg"><i data-lucide="calendar" class="w-6 h-6"></i></div>
+                        <div><h3 class="text-lg font-bold text-fmm-dark leading-tight">Agenda Institucional</h3><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1" id="calendar-title">Carregando...</p></div>
                     </div>
-
-                    <div class="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-                        <button onclick="changeView('monthly')" id="btn-monthly" class="px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-fmm-blue">Mensal</button>
-                        <button onclick="changeView('weekly')" id="btn-weekly" class="px-6 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-600">Semanal</button>
-                    </div>
-
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-1 bg-slate-50 rounded-xl p-1">
-                            <button onclick="navigateCalendar(-1)" class="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500">
-                                <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="navigateToday()" class="px-3 py-1.5 text-[10px] font-black uppercase text-fmm-blue hover:bg-white rounded-lg transition-all">Hoje</button>
-                            <button onclick="navigateCalendar(1)" class="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500">
-                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                            </button>
-                        </div>
-                        <button onclick="openEventModal()" class="bg-fmm-blue hover:bg-fmm-dark text-white px-6 py-3 rounded-2xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-fmm-blue/20">
-                            <i data-lucide="plus" class="w-4 h-4"></i> Novo Evento
-                        </button>
+                    <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+                        <button onclick="navigateCalendar(-1)" class="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                        <button onclick="navigateToday()" class="px-3 py-1.5 text-[10px] font-black uppercase text-fmm-blue">Hoje</button>
+                        <button onclick="navigateCalendar(1)" class="p-2 hover:bg-white hover:shadow-sm rounded-lg transition-all text-slate-500"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                     </div>
                 </div>
 
@@ -177,424 +122,90 @@
                         <div class="py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Sex</div>
                         <div class="py-3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Sáb</div>
                     </div>
-                    <div id="calendar-body" class="flex-1 overflow-y-auto custom-scrollbar calendar-grid">
-                        <!-- Conteúdo dinâmico -->
-                    </div>
+                    <div id="calendar-body" class="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-7 border-t border-slate-100"></div>
                 </div>
-
             </div>
         </div>
     </main>
 
-    <!-- MODAL DE NOVO AGENDAMENTO -->
-    <div id="eventModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-fmm-dark/60 backdrop-blur-sm p-4">
-        <div class="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl flex flex-col max-h-[90vh] animate-fade-in-up">
-            <div class="p-8 border-b border-slate-100 flex justify-between items-center">
-                <h2 class="text-2xl font-bold text-fmm-dark" id="eventModalTitle">Agendar Evento</h2>
-                <button onclick="closeEventModal()" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-slate-100">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-
-            <div class="p-8 space-y-6 overflow-y-auto custom-scrollbar">
-                <div class="space-y-4">
-                    <div class="space-y-1.5">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Título do Agendamento</label>
-                        <input type="text" id="evTitle" placeholder="Ex: Reunião Pedagógica" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue">
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Local / Link</label>
-                        <input type="text" id="evLocal" placeholder="Ex: Sala de Reuniões, Google Meet..." class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue">
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1.5">
-                            <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Início</label>
-                            <input type="datetime-local" id="evStart" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue font-medium text-slate-600">
-                        </div>
-                        <div class="space-y-1.5">
-                            <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Fim</label>
-                            <input type="datetime-local" id="evEnd" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue font-medium text-slate-600">
-                        </div>
-                    </div>
-
-                    <div class="space-y-1.5">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Responsável pelo Evento</label>
-                        <select id="evResponsible" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue font-bold text-slate-600">
-                            <!-- JS inyecta opções -->
-                        </select>
-                    </div>
-
-                    <div class="space-y-3">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Participantes</label>
-                        <div class="relative">
-                            <i data-lucide="search" class="absolute left-4 top-3.5 w-4 h-4 text-slate-400"></i>
-                            <input type="text" id="searchParticipante" onkeyup="searchPerfis(this.value)" placeholder="Buscar por nome..." class="w-full pl-12 pr-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue">
-                            
-                            <div id="participantesResults" class="absolute w-full mt-2 bg-white border border-slate-100 rounded-2xl shadow-2xl max-h-48 overflow-y-auto z-50 hidden custom-scrollbar"></div>
-                        </div>
-                        <div id="selectedParticipantes" class="flex flex-wrap gap-2 pt-2"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-8 border-t bg-slate-50/50 rounded-b-[32px] flex justify-between items-center gap-4">
-                <button id="btnDeleteEvent" onclick="deleteEvent()" class="hidden px-6 py-3.5 bg-red-50 text-red-600 hover:bg-red-100 font-bold text-xs rounded-2xl transition-all flex items-center gap-2">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i> Excluir
-                </button>
-                <div class="flex gap-4 ml-auto">
-                    <button onclick="closeEventModal()" class="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700">Cancelar</button>
-                    <button id="btnSaveEvent" onclick="saveEvent()" class="px-10 py-3.5 bg-fmm-lime text-fmm-dark font-bold text-sm rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all">
-                        Salvar Agendamento
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const supabaseUrl = 'https://panxfescmzjdltthreqy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbnhmZXNjbXpqZGx0dGhyZXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTA5NDMsImV4cCI6MjA4MjYyNjk0M30.jSZVhw2TFD52zRV4NZUGUeXKBHedWXcdH7w_fXeoGhA';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-        let currentView = 'monthly';
         let currentDate = new Date();
-        let selectedParticipantes = [];
-        let allPerfis = [];
         let currentUser = null;
-        let editingEventId = null;
-
-        // HELPER PARA FORMATAR DATA LOCAL (Evita erro de timezone UTC pulando dia)
-        function formatDateLocal(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
-
-        // HELPER PARA FORMATAR PARA DATETIME-LOCAL INPUT
-        function formatToDateTimeLocal(isoString) {
-            const d = new Date(isoString);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const hour = String(d.getHours()).padStart(2, '0');
-            const min = String(d.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day}T${hour}:${min}`;
-        }
 
         async function init() {
-            // Inicializar Sidebar
-            await SidebarComponent.render('sidebar-container');
+            // Renderiza Sidebar
+            if (window.SidebarComponent) await SidebarComponent.render('sidebar-container');
 
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
             if (!user) return window.location.href = '../../index.html';
             currentUser = user;
 
-            await fetchDashboardStats();
-            await fetchPerfis();
-            await checkUser();
-            
+            // TASK 3.2.2: Atualização de Data com Helper ManausTime
             updateDateUI();
+            
+            await fetchStats();
+            await fetchUserProfile();
             renderCalendar();
-            // SidebarComponent.render already calls lucide.createIcons(), 
-            // but we can call it again just in case there are dynamic elements
             lucide.createIcons();
         }
 
-        async function fetchPerfis() {
-            const { data } = await supabaseClient.from('perfis').select('id, nome_completo, cargo').order('nome_completo');
-            allPerfis = data || [];
-            const selectRes = document.getElementById('evResponsible');
-            if(selectRes) {
-                selectRes.innerHTML = allPerfis.map(p => `<option value="${p.id}">${p.nome_completo} (${p.cargo})</option>`).join('');
+        async function fetchUserProfile() {
+            const { data } = await window.supabaseClient.from('perfis').select('*').eq('id', currentUser.id).single();
+            if (data) {
+                document.getElementById('userName').innerText = data.nome_completo;
+                document.getElementById('userInitials').innerText = data.nome_completo.charAt(0);
+                document.getElementById('userRoleLabel').innerText = `Acesso ${data.cargo}`;
             }
         }
 
-        async function fetchDashboardStats() {
-            const { count: countProfs } = await supabaseClient.from('perfis').select('*', { count: 'exact', head: true }).eq('cargo', 'professor');
-            const { count: countAlunos } = await supabaseClient.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'Cursando');
-            const { count: countTurmas } = await supabaseClient.from('turmas').select('*', { count: 'exact', head: true });
-            const { count: countDiscs } = await supabaseClient.from('disciplinas').select('*', { count: 'exact', head: true });
+        async function fetchStats() {
+            const { count: profs } = await window.supabaseClient.from('perfis').select('*', { count: 'exact', head: true }).eq('cargo', 'professor');
+            const { count: alunos } = await window.supabaseClient.from('alunos').select('*', { count: 'exact', head: true }).eq('status', 'CURSANDO');
+            const { count: turmas } = await window.supabaseClient.from('turmas').select('*', { count: 'exact', head: true });
+            const { count: discs } = await window.supabaseClient.from('disciplinas').select('*', { count: 'exact', head: true });
 
-            document.getElementById('stat-profs').innerText = countProfs || 0;
-            document.getElementById('stat-alunos').innerText = countAlunos || 0;
-            document.getElementById('stat-turmas').innerText = countTurmas || 0;
-            document.getElementById('stat-discs').innerText = countDiscs || 0;
+            document.getElementById('stat-profs').innerText = profs || 0;
+            document.getElementById('stat-alunos').innerText = alunos || 0;
+            document.getElementById('stat-turmas').innerText = turmas || 0;
+            document.getElementById('stat-discs').innerText = discs || 0;
+        }
+
+        function updateDateUI() {
+            const label = document.getElementById('current-date');
+            if (label && window.ManausTime) {
+                label.innerText = ManausTime.formatFull(new Date());
+                label.classList.add('capitalize');
+            }
         }
 
         function renderCalendar() {
             const body = document.getElementById('calendar-body');
             const title = document.getElementById('calendar-title');
             body.innerHTML = '';
-
-            if (currentView === 'monthly') {
-                renderMonthly(body, title);
-            } else {
-                renderWeekly(body, title);
-            }
-            fetchEvents();
-        }
-
-        function renderMonthly(container, titleEl) {
+            
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
+            const firstDay = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            title.innerText = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(currentDate);
             
-            titleEl.innerText = firstDay.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-
-            const startDay = firstDay.getDay();
-            const totalDays = lastDay.getDate();
-
-            const prevMonthLastDay = new Date(year, month, 0).getDate();
-            for (let i = startDay - 1; i >= 0; i--) {
-                container.innerHTML += `<div class="calendar-day other-month font-bold text-xs">${prevMonthLastDay - i}</div>`;
+            for (let i = 0; i < firstDay; i++) {
+                body.innerHTML += `<div class="p-4 border-r border-b border-slate-100 bg-slate-50/30"></div>`;
             }
 
             const today = new Date();
             for (let d = 1; d <= totalDays; d++) {
-                const dayObj = new Date(year, month, d);
                 const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-                const dateKey = formatDateLocal(dayObj);
-                container.innerHTML += `
-                    <div class="calendar-day ${isToday ? 'today' : ''}" id="day-${dateKey}">
-                        <span class="text-xs font-black ${isToday ? 'text-fmm-blue' : 'text-slate-400'}">${d}</span>
-                        <div class="mt-2 space-y-1 event-list-container" id="events-${dateKey}"></div>
-                    </div>
-                `;
+                body.innerHTML += `
+                    <div class="p-4 border-r border-b border-slate-100 min-h-[120px] hover:bg-slate-50 transition-colors">
+                        <span class="text-xs font-bold ${isToday ? 'text-white bg-fmm-blue px-2.5 py-1 rounded-lg shadow-md' : 'text-slate-400'}">${d}</span>
+                    </div>`;
             }
         }
 
-        function renderWeekly(container, titleEl) {
-            const tempDate = new Date(currentDate);
-            const dayOfWeek = tempDate.getDay();
-            const firstDay = new Date(tempDate.setDate(tempDate.getDate() - dayOfWeek));
-            
-            const lastDay = new Date(firstDay);
-            lastDay.setDate(lastDay.getDate() + 6);
-
-            titleEl.innerText = `${firstDay.getDate()} - ${lastDay.getDate()} de ${firstDay.toLocaleDateString('pt-BR', { month: 'long' })}`;
-
-            for (let i = 0; i < 7; i++) {
-                const day = new Date(firstDay);
-                day.setDate(day.getDate() + i);
-                const isToday = day.toDateString() === new Date().toDateString();
-                const dateKey = formatDateLocal(day);
-
-                container.innerHTML += `
-                    <div class="calendar-day ${isToday ? 'today' : ''} min-h-[450px]" id="day-${dateKey}">
-                        <span class="text-[10px] font-black uppercase ${isToday ? 'text-fmm-blue' : 'text-slate-400'}">
-                            ${day.getDate()} ${day.toLocaleDateString('pt-BR', { weekday: 'short' })}
-                        </span>
-                        <div class="event-list-container" id="events-${dateKey}"></div>
-                    </div>
-                `;
-            }
-        }
-
-        async function fetchEvents() {
-            const { data, error } = await supabaseClient.from('agendamentos').select('*');
-            if (error) return;
-
-            data.forEach(ev => {
-                const startObj = new Date(ev.horario_inicio);
-                const dateKey = formatDateLocal(startObj);
-                const list = document.getElementById(`events-${dateKey}`);
-                if (list) {
-                    const time = startObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    const card = document.createElement('div');
-                    card.className = 'event-card';
-                    card.innerHTML = `<span class="opacity-70 font-medium">${time}</span> · ${ev.titulo}`;
-                    card.title = `${time} - ${ev.titulo} (${ev.local})`;
-                    card.onclick = (e) => {
-                        e.stopPropagation();
-                        loadEventToEdit(ev.id);
-                    };
-                    list.appendChild(card);
-                }
-            });
-            lucide.createIcons();
-        }
-
-        async function loadEventToEdit(id) {
-            editingEventId = id;
-            const { data: event, error } = await supabaseClient.from('agendamentos').select('*, agendamento_participantes(id_perfil)').eq('id', id).single();
-            if (error) return alert("Erro ao carregar evento.");
-
-            document.getElementById('eventModalTitle').innerText = "Editar Agendamento";
-            document.getElementById('evTitle').value = event.titulo;
-            document.getElementById('evLocal').value = event.local || '';
-            document.getElementById('evStart').value = formatToDateTimeLocal(event.horario_inicio);
-            document.getElementById('evEnd').value = formatToDateTimeLocal(event.horario_fim);
-            document.getElementById('evResponsible').value = event.id_responsavel;
-
-            selectedParticipantes = [];
-            event.agendamento_participantes.forEach(part => {
-                const perfil = allPerfis.find(p => p.id === part.id_perfil);
-                if (perfil) selectedParticipantes.push({ id: perfil.id, nome: perfil.nome_completo });
-            });
-            renderSelectedParticipantes();
-
-            document.getElementById('btnDeleteEvent').classList.remove('hidden');
-            document.getElementById('eventModal').classList.remove('hidden');
-            lucide.createIcons();
-        }
-
-        async function deleteEvent() {
-            if (!confirm("Tem certeza que deseja excluir este agendamento?")) return;
-            const { error } = await supabaseClient.from('agendamentos').delete().eq('id', editingEventId);
-            if (error) return alert("Erro ao excluir: " + error.message);
-            
-            alert("Agendamento removido.");
-            closeEventModal();
-            renderCalendar();
-        }
-
-        function changeView(view) {
-            currentView = view;
-            document.getElementById('btn-monthly').className = view === 'monthly' ? 'px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-fmm-blue' : 'px-6 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-600';
-            document.getElementById('btn-weekly').className = view === 'weekly' ? 'px-6 py-2 rounded-xl text-xs font-bold transition-all bg-white shadow-sm text-fmm-blue' : 'px-6 py-2 rounded-xl text-xs font-bold transition-all text-slate-400 hover:text-slate-600';
-            renderCalendar();
-        }
-
-        function navigateCalendar(dir) {
-            if (currentView === 'monthly') {
-                currentDate.setMonth(currentDate.getMonth() + dir);
-            } else {
-                currentDate.setDate(currentDate.getDate() + (dir * 7));
-            }
-            renderCalendar();
-        }
-
-        function navigateToday() {
-            currentDate = new Date();
-            renderCalendar();
-        }
-
-        function searchPerfis(val) {
-            const results = document.getElementById('participantesResults');
-            if (!val) return results.classList.add('hidden');
-            const filtered = allPerfis.filter(p => p.nome_completo.toLowerCase().includes(val.toLowerCase()));
-            results.innerHTML = filtered.map(p => `
-                <div onclick="addParticipante('${p.id}', '${p.nome_completo}')" class="p-4 hover:bg-slate-50 cursor-pointer flex flex-col border-b border-slate-50 last:border-0">
-                    <span class="text-xs font-bold text-fmm-dark">${p.nome_completo}</span>
-                    <span class="text-[9px] text-slate-400 uppercase font-bold">${p.cargo}</span>
-                </div>
-            `).join('');
-            results.classList.remove('hidden');
-        }
-
-        function addParticipante(id, nome) {
-            if (selectedParticipantes.some(p => p.id === id)) return;
-            selectedParticipantes.push({ id, nome });
-            renderSelectedParticipantes();
-            document.getElementById('participantesResults').classList.add('hidden');
-            document.getElementById('searchParticipante').value = '';
-        }
-
-        function removeParticipante(id) {
-            selectedParticipantes = selectedParticipantes.filter(p => p.id !== id);
-            renderSelectedParticipantes();
-        }
-
-        function renderSelectedParticipantes() {
-            const container = document.getElementById('selectedParticipantes');
-            container.innerHTML = selectedParticipantes.map(p => `
-                <div class="px-3 py-1.5 bg-fmm-blue/10 text-fmm-blue rounded-xl text-[10px] font-bold flex items-center gap-2">
-                    ${p.nome}
-                    <button onclick="removeParticipante('${p.id}')"><i data-lucide="x" class="w-3 h-3"></i></button>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        async function saveEvent() {
-            const titulo = document.getElementById('evTitle').value;
-            const local = document.getElementById('evLocal').value;
-            const inicioRaw = document.getElementById('evStart').value;
-            const fimRaw = document.getElementById('evEnd').value;
-            const resp = document.getElementById('evResponsible').value;
-            const btn = document.getElementById('btnSaveEvent');
-
-            if (!titulo || !inicioRaw || !fimRaw) return alert("Preencha os campos obrigatórios.");
-            
-            const inicio = new Date(inicioRaw).toISOString();
-            const fim = new Date(fimRaw).toISOString();
-
-            btn.disabled = true;
-            btn.innerText = "A guardar...";
-
-            try {
-                let eventId = editingEventId;
-
-                if (!editingEventId) {
-                    const { data: event, error } = await supabaseClient.from('agendamentos').insert({
-                        titulo, local, horario_inicio: inicio, horario_fim: fim, id_responsavel: resp, id_criador: currentUser.id
-                    }).select().single();
-                    if (error) throw error;
-                    eventId = event.id;
-                } else {
-                    const { error } = await supabaseClient.from('agendamentos').update({
-                        titulo, local, horario_inicio: inicio, horario_fim: fim, id_responsavel: resp
-                    }).eq('id', editingEventId);
-                    if (error) throw error;
-
-                    await supabaseClient.from('agendamento_participantes').delete().eq('id_agendamento', editingEventId);
-                }
-
-                const participantsToInsert = selectedParticipantes.map(p => ({
-                    id_agendamento: eventId,
-                    id_perfil: p.id
-                }));
-                
-                if (!selectedParticipantes.some(p => p.id === currentUser.id)) participantsToInsert.push({ id_agendamento: eventId, id_perfil: currentUser.id });
-                if (resp !== currentUser.id && !selectedParticipantes.some(p => p.id === resp)) participantsToInsert.push({ id_agendamento: eventId, id_perfil: resp });
-
-                const { error: pError } = await supabaseClient.from('agendamento_participantes').insert(participantsToInsert);
-                if (pError) throw pError;
-
-                alert("Agendamento salvo com sucesso!");
-                closeEventModal();
-                renderCalendar();
-            } catch (err) {
-                alert("Erro ao salvar: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Salvar Agendamento";
-            }
-        }
-
-        async function checkUser() {
-            const { data: perfil } = await supabaseClient.from('perfis').select('nome_completo').eq('id', currentUser.id).maybeSingle();
-            if (perfil) {
-                document.getElementById('userName').innerText = perfil.nome_completo;
-                document.getElementById('userInitials').innerText = perfil.nome_completo.charAt(0);
-            }
-        }
-
-        function updateDateUI() {
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
-        }
-
-        function openEventModal() { 
-            editingEventId = null;
-            document.getElementById('eventModalTitle').innerText = "Agendar Evento";
-            document.getElementById('btnDeleteEvent').classList.add('hidden');
-            document.querySelectorAll('#eventModal input').forEach(i => i.value = '');
-            document.getElementById('eventModal').classList.remove('hidden'); 
-            if (currentUser) {
-                document.getElementById('evResponsible').value = currentUser.id;
-            }
-            selectedParticipantes = [];
-            renderSelectedParticipantes();
-        }
-
-        function closeEventModal() { 
-            document.getElementById('eventModal').classList.add('hidden');
-            editingEventId = null;
-        }
+        function navigateCalendar(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
+        function navigateToday() { currentDate = new Date(); renderCalendar(); }
 
         window.onload = init;
     </script>

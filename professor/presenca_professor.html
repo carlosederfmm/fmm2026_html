@@ -11,6 +11,7 @@
 
     <!-- Importação do Componente de Sidebar -->
     <script src="../sidebar.js"></script>
+    <script src="../assets/js/supabase_client.js"></script>
 
     <script>
         tailwind.config = {
@@ -238,9 +239,7 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://panxfescmzjdltthreqy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbnhmZXNjbXpqZGx0dGhyZXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTA5NDMsImV4cCI6MjA4MjYyNjk0M30.jSZVhw2TFD52zRV4NZUGUeXKBHedWXcdH7w_fXeoGhA';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        
 
         let currentUser = null;
         let globalMatriculas = [];

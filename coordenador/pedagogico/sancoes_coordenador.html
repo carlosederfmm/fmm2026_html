@@ -9,7 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Importação do Componente de Sidebar -->
+    <!-- TASK 3.2.1: Cliente Supabase Global e Localização (Manaus) -->
+    <script src="../../assets/js/supabase_client.js"></script>
+    <!-- TASK 2.3.1: Componente de Sidebar -->
     <script src="../../sidebar.js"></script>
 
     <script>
@@ -75,13 +77,10 @@
 <body class="flex h-screen w-screen overflow-hidden">
 
     <!-- SIDEBAR CONTAINER -->
-    <aside id="sidebar-container" class="sidebar-transition w-72 bg-fmm-dark text-white flex-shrink-0 flex flex-col shadow-2xl relative z-20">
-        <!-- Carregado via sidebar.js -->
-    </aside>
+    <aside id="sidebar-container" class="sidebar-transition w-72 bg-fmm-dark text-white flex-shrink-0 flex flex-col shadow-2xl relative z-20"></aside>
 
     <!-- CONTEÚDO PRINCIPAL -->
     <main class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden relative">
-        <!-- ... Header e Conteúdo Principal (Mantidos) ... -->
         <header class="bg-white h-20 border-b flex items-center justify-between px-8 z-10 shadow-sm flex-shrink-0">
             <div class="flex flex-col">
                 <h1 class="text-xl font-bold text-fmm-dark flex items-center gap-2">
@@ -108,7 +107,7 @@
             </div>
         </div>
 
-        <!-- DRAWER E MODAIS (Mantidos da versão anterior, apenas Sidebar atualizada) -->
+        <!-- DRAWER E HISTÓRICO -->
         <div id="studentDrawer" class="drawer border-l border-slate-100 flex flex-col">
             <div class="p-6 border-b border-slate-100 flex justify-between items-start bg-slate-50 flex-shrink-0">
                 <div class="flex gap-4 items-start">
@@ -123,7 +122,9 @@
                 <button onclick="closeDrawer()" class="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-6">
+                <!-- ALERTA DE LIMITE (3/3) -->
                 <div id="parentAlertContainer" class="hidden flex flex-col gap-3"></div>
+                
                 <div class="flex items-center justify-between pt-2">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Histórico Disciplinar</h3>
                     <button onclick="openNewSanctionModal()" class="bg-fmm-blue hover:bg-fmm-dark text-white px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-fmm-blue/20 transform hover:scale-105 active:scale-95">
@@ -133,10 +134,9 @@
                 <div id="historyList" class="space-y-6"></div>
             </div>
         </div>
-        
-        <!-- (Restante dos modais mantidos...) -->
+
+        <!-- MODAL DE SANÇÃO -->
         <div id="sanctionModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-fmm-dark/60 backdrop-blur-sm p-4">
-           <!-- Conteúdo do modal de sanção (mantido) -->
             <div class="bg-white w-full max-w-lg rounded-[32px] shadow-2xl flex flex-col animate-fade-in-up overflow-hidden max-h-[90vh]">
                 <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <h2 class="text-lg font-bold text-fmm-dark flex items-center gap-2" id="modalSanctionTitle"><i data-lucide="file-warning" class="w-5 h-5 text-red-500"></i> Registar Sanção</h2>
@@ -176,12 +176,13 @@
                 </div>
                 <div class="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
                     <button onclick="closeSanctionModal()" class="px-6 py-2.5 text-xs font-bold text-slate-500 hover:text-slate-700 transition-colors">Cancelar</button>
-                    <button onclick="saveSanction()" id="btnSaveSanction" class="px-8 py-2.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-red-200 transition-all flex items-center gap-2 transform hover:scale-105 active:scale-95"><i data-lucide="check" class="w-4 h-4"></i> Confirmar</button>
+                    <button onclick="saveSanction()" id="btnSaveSanction" class="px-8 py-2.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 transform hover:scale-105 active:scale-95"><i data-lucide="check" class="w-4 h-4"></i> Confirmar</button>
                     <button id="btnDeleteSanction" onclick="deleteSanction()" class="hidden px-6 py-2.5 bg-red-50 text-red-600 rounded-2xl text-xs font-bold hover:bg-red-100 transition-all flex items-center gap-2"><i data-lucide="trash-2" class="w-4 h-4"></i> Excluir</button>
                 </div>
             </div>
         </div>
 
+        <!-- COMUNICADO AOS RESPONSÁVEIS -->
         <div id="emailModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
             <div class="bg-white w-full max-w-lg rounded-[24px] shadow-2xl p-6 animate-fade-in-up">
                 <h3 class="text-lg font-bold text-fmm-dark mb-4">Comunicado aos Responsáveis</h3>
@@ -193,6 +194,7 @@
             </div>
         </div>
 
+        <!-- ZOOM FOTO -->
         <div id="photoModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onclick="closePhotoZoom()">
             <div class="relative animate-fade-in-up" onclick="event.stopPropagation()">
                 <button onclick="closePhotoZoom()" class="absolute -top-12 -right-4 text-white hover:text-fmm-lime transition-colors"><i data-lucide="x" class="w-8 h-8"></i></button>
@@ -200,64 +202,59 @@
                 <div id="enlargedName" class="mt-4 text-center text-white font-bold text-lg tracking-tight"></div>
             </div>
         </div>
-
     </main>
 
     <script>
-        const supabaseUrl = 'https://panxfescmzjdltthreqy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbnhmZXNjbXpqZGx0dGhyZXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTA5NDMsImV4cCI6MjA4MjYyNjk0M30.jSZVhw2TFD52zRV4NZUGUeXKBHedWXcdH7w_fXeoGhA';
-        window.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-
         const INFRACTIONS = [
-                "1. Entrar na instituição sem uniforme completo",
-                "2. Praticar atitudes ou brincadeiras desrespeitosas ou agressivas",
-                "3. Usar acessórios proibidos ou tatuagens aparentes",
-                "4. Usar cabelo fora do padrão institucional",
-                "5. Manter unhas longas, sujas ou com esmalte",
-                "6. Usar maquiagem ou cílios postiços",
-                "7. Mascar chiclete nas dependências da instituição",
-                "8. Utilizar celular ou eletrônicos sem autorização",
-                "9. Portar ou consumir alimentos fora do refeitório",
-                "10. Comparecer às aulas sem material necessário",
-                "11. Receber encomendas na portaria ou secretaria",
-                "12. Trazer materiais estranhos às atividades escolares",
-                "13. Deixar de realizar tarefas escolares",
-                "14. Realizar atividades alheias durante a aula",
-                "15. Entrar ou sair da sala sem autorização",
-                "16. Prejudicar o andamento das atividades escolares",
-                "17. Portar ou usar eletrônicos pessoais sem autorização",
-                "18. Promover jogos, vendas ou campanhas sem autorização",
-                "19. Causar algazarra ou correr nas dependências da instituição",
-                "20. Deixar pertences pessoais em áreas comuns",
-                "21. Furar fila no refeitório",
-                "22. Utilizar a imagem da instituição sem autorização",
-                "23. Usar a mesa do professor ou a lousa sem autorização",
-                "24. Desperdiçar alimentos",
-                "25. Desperdiçar materiais de uso comum",
-                "26. Customizar ou descaracterizar o uniforme",
-                "27. Trazer ou praticar jogos de azar",
-                "28. Manter contato físico íntimo na escola",
-                "29. Impedir a entrada de colegas ou incentivar ausência coletiva",
-                "30. Usar palavrões nas dependências da escola",
-                "31. Praticar atos ofensivos à moral e aos bons costumes",
-                "32. Praticar discriminação ou desrespeito a características pessoais",
-                "33. Importunar ou constranger membros da comunidade escolar",
-                "34. Circular pela escola em horário de aula",
-                "35. Injuriar, caluniar ou praticar violência",
-                "36. Agredir verbal ou fisicamente qualquer membro da comunidade escolar",
-                "37. Divulgar conteúdo que prejudique a imagem da instituição",
-                "38. Danificar bens da instituição ou de terceiros",
-                "39. Furtar ou apropriar-se de objetos alheios",
-                "40. Portar armas ou objetos perigosos",
-                "41. Portar ou usar drogas lícitas ou ilícitas",
-                "42. Alterar ou falsificar documentos escolares",
-                "43. Emprestar o uniforme escolar a terceiros",
-                "44. Usar o uniforme em ambientes inadequados",
-                "45. Namorar com o uniforme no entorno da instituição",
-                "46. Ausentar-se da escola sem autorização",
-                "47. Adulterar ou invalidar informações do crachá",
-                "48. Escovar os dentes circulando pelos corredores",
-                "49. Utilizar meios ilícitos ou fraudulentos em avaliações"
+            "1. Entrar na instituição sem uniforme completo",
+            "2. Praticar atitudes ou brincadeiras desrespeitosas ou agressivas",
+            "3. Usar acessórios proibidos ou tatuagens aparentes",
+            "4. Usar cabelo fora do padrão institucional",
+            "5. Manter unhas longas, sujas ou com esmalte",
+            "6. Usar maquiagem ou cílios postiços",
+            "7. Mascar chiclete nas dependências da instituição",
+            "8. Utilizar celular ou eletrônicos sem autorização",
+            "9. Portar ou consumir alimentos fora do refeitório",
+            "10. Comparecer às aulas sem material necessário",
+            "11. Receber encomendas na portaria ou secretaria",
+            "12. Trazer materiais estranhos às atividades escolares",
+            "13. Deixar de realizar tarefas escolares",
+            "14. Realizar atividades alheias durante a aula",
+            "15. Entrar ou sair da sala sem autorização",
+            "16. Prejudicar o andamento das atividades escolares",
+            "17. Portar ou usar eletrônicos pessoais sem autorização",
+            "18. Promover jogos, vendas ou campanhas sem autorização",
+            "19. Causar algazarra ou correr nas dependências da instituição",
+            "20. Deixar pertences pessoais em áreas comuns",
+            "21. Furar fila no refeitório",
+            "22. Utilizar a imagem da instituição sem autorização",
+            "23. Usar a mesa do professor ou a lousa sem autorização",
+            "24. Desperdiçar alimentos",
+            "25. Desperdiçar materiais de uso comum",
+            "26. Customizar ou descaracterizar o uniforme",
+            "27. Trazer ou praticar jogos de azar",
+            "28. Manter contato físico íntimo na escola",
+            "29. Impedir a entrada de colegas ou incentivar ausência coletiva",
+            "30. Usar palavrões nas dependências da escola",
+            "31. Praticar atos ofensivos à moral e aos bons costumes",
+            "32. Praticar discriminação ou desrespeito a características pessoais",
+            "33. Importunar ou constranger membros da comunidade escolar",
+            "34. Circular pela escola em horário de aula",
+            "35. Injuriar, caluniar ou praticar violência",
+            "36. Agredir verbal ou fisicamente qualquer membro da comunidade escolar",
+            "37. Divulgar conteúdo que prejudique a imagem da instituição",
+            "38. Danificar bens da instituição ou de terceiros",
+            "39. Furtar ou apropriar-se de objetos alheios",
+            "40. Portar armas ou objetos perigosos",
+            "41. Portar ou usar drogas lícitas ou ilícitas",
+            "42. Alterar ou falsificar documentos escolares",
+            "43. Emprestar o uniforme escolar a terceiros",
+            "44. Usar o uniforme em ambientes inadequados",
+            "45. Namorar com o uniforme no entorno da instituição",
+            "46. Ausentar-se da escola sem autorização",
+            "47. Adulterar ou invalidar informações do crachá",
+            "48. Escovar os dentes circulando pelos corredores",
+            "49. Utilizar meios ilícitos ou fraudulentos em avaliações"
         ];
 
         let currentUser = null;
@@ -276,7 +273,9 @@
         }
 
         async function init() {
+            // TASK 3.2.1: Sidebar Componentizada
             if(window.SidebarComponent) await SidebarComponent.render('sidebar-container');
+            
             const { data: { user } } = await window.supabaseClient.auth.getUser();
             if(user) {
                  const { data: profile } = await window.supabaseClient.from('perfis').select('*').eq('id', user.id).single();
@@ -286,7 +285,9 @@
             const reasonSelect = document.getElementById('sanctionReason');
             reasonSelect.innerHTML = '<option value="">Selecione a infração...</option>' + 
                 INFRACTIONS.map(inf => `<option value="${inf}">${inf}</option>`).join('');
-            document.getElementById('sanctionDate').valueAsDate = new Date();
+            
+            // TASK 3.2.2: Inicializa data via ManausTime helper
+            document.getElementById('sanctionDate').value = ManausTime.toISODate();
 
             renderGrid();
             lucide.createIcons();
@@ -304,25 +305,30 @@
 
             if (filterVal && filterVal.length === 1) return;
 
-            let query = window.supabaseClient.from('alunos').select('ra, nome_completo, url_foto').limit(50);
+            loading.classList.remove('hidden');
+            grid.innerHTML = '';
+            if(empty) empty.classList.add('hidden');
+
+            let query = window.supabaseClient.from('alunos').select('ra, nome_completo, url_foto').limit(60);
             if(filterVal && filterVal.length >= 2) query = query.or(`nome_completo.ilike.%${filterVal}%,ra.ilike.%${filterVal}%`);
 
             const { data: students, error } = await query.order('nome_completo');
             if (thisRequestTime < latestRequestTimestamp) return;
 
-            grid.innerHTML = '';
-            if(loading) loading.classList.add('hidden');
-            if(empty) empty.classList.add('hidden');
+            loading.classList.add('hidden');
 
             if(error || !students || students.length === 0) {
-                 if(empty) { empty.classList.remove('hidden'); grid.appendChild(empty); }
+                 if(empty) empty.classList.remove('hidden');
                  return;
             }
 
+            // Buscar sanções para os dots de uma vez só
+            const { data: allSancoes } = await window.supabaseClient.from('sancoes_disciplinares').select('ra_aluno, nivel');
+
             for(const s of students) {
-                const { data: sancoes } = await window.supabaseClient.from('sancoes_disciplinares').select('nivel').eq('ra_aluno', s.ra);
+                const sancoesAlu = allSancoes?.filter(sc => sc.ra_aluno === s.ra) || [];
                 const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-                if(sancoes) sancoes.forEach(sc => counts[sc.nivel]++);
+                sancoesAlu.forEach(sc => counts[sc.nivel]++);
 
                 const avatar = formatDriveUrl(s.url_foto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.nome_completo)}&background=random`;
 
@@ -342,8 +348,8 @@
                 card.innerHTML = `
                     <div class="flex items-center gap-4 mb-6">
                         <img src="${avatar}" class="w-14 h-14 rounded-2xl object-cover bg-slate-100">
-                        <div>
-                            <h3 class="font-bold text-fmm-dark text-sm leading-tight line-clamp-1" title="${s.nome_completo}">${s.nome_completo}</h3>
+                        <div class="overflow-hidden">
+                            <h3 class="font-bold text-fmm-dark text-sm leading-tight truncate" title="${s.nome_completo}">${s.nome_completo}</h3>
                             <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100 mt-1 inline-block">RA: ${s.ra}</span>
                         </div>
                     </div>
@@ -364,20 +370,11 @@
             document.getElementById('drawerRA').innerText = `RA: ${student.ra}`;
             document.getElementById('drawerAvatar').src = formatDriveUrl(student.url_foto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.nome_completo)}`;
             await renderHistory();
-            await checkAlerts();
+            await checkAlerts(); // RESTAURADO: Verificação de alertas 3/3
             document.getElementById('studentDrawer').classList.add('open');
         }
 
         function closeDrawer() { document.getElementById('studentDrawer').classList.remove('open'); currentStudent = null; }
-
-        function openPhotoZoom() {
-            if(!currentStudent) return;
-            const modal = document.getElementById('photoModal');
-            document.getElementById('enlargedPhoto').src = document.getElementById('drawerAvatar').src;
-            document.getElementById('enlargedName').innerText = currentStudent.nome_completo;
-            modal.classList.remove('hidden');
-        }
-        function closePhotoZoom() { document.getElementById('photoModal').classList.add('hidden'); }
 
         async function renderHistory() {
             const container = document.getElementById('historyList');
@@ -392,7 +389,6 @@
 
             currentStudent.history = history.map(h => ({ id: h.id, level: h.nivel, code: h.codigo, date: h.data_sancao, reason: h.infracao, author: h.perfis?.nome_completo || 'Sistema', observacao: h.observacao }));
 
-            // Agrupar por nível
             const groupedHistory = { 1: [], 2: [], 3: [], 4: [] };
             history.forEach(h => { groupedHistory[h.nivel].push(h); });
             const colors = { 1: 'bg-blue-100 text-blue-700', 2: 'bg-yellow-100 text-yellow-700', 3: 'bg-orange-100 text-orange-700', 4: 'bg-red-100 text-red-700' };
@@ -404,6 +400,7 @@
                     levelSection.className = "mb-6";
                     levelSection.innerHTML = `<h4 class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 pb-1">${levelLabels[level]}</h4>`;
                     groupedHistory[level].forEach(h => {
+                        const displayDate = ManausTime.format(h.data_sancao); // TASK 3.2.2
                         const authorName = h.perfis?.nome_completo || 'Sistema';
                         const obsHTML = h.observacao ? `<p class="text-[10px] text-slate-500 mt-2 bg-white/50 p-2 rounded border border-slate-100 italic">Obs: "${h.observacao}"</p>` : '';
                         levelSection.innerHTML += `
@@ -411,7 +408,7 @@
                                 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-sm hover:border-fmm-blue/30 transition-all">
                                     <div class="flex justify-between items-start mb-1">
                                         <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded ${colors[h.nivel]}">Nível ${h.nivel}</span>
-                                        <span class="text-[10px] font-bold text-slate-400">${h.data_sancao.split('-').reverse().join('/')}</span>
+                                        <span class="text-[10px] font-bold text-slate-400">${displayDate}</span>
                                     </div>
                                     <p class="text-xs font-bold text-slate-700 mb-1 leading-snug">${h.infracao}</p>
                                     ${obsHTML}
@@ -428,8 +425,10 @@
                     container.appendChild(levelSection);
                 }
             });
+            lucide.createIcons();
         }
 
+        // RESTAURADO: Lógica de Alertas de Limite e Comunicados aos Pais
         async function checkAlerts() {
             const container = document.getElementById('parentAlertContainer');
             container.innerHTML = '';
@@ -472,7 +471,7 @@
             let dataToLoad = {};
             if (existingSanction) {
                 editingSanctionId = existingSanction.id;
-                dataToLoad = { level: existingSanction.nivel || existingSanction.level, date: existingSanction.data_sancao || existingSanction.date, reason: existingSanction.infracao || existingSanction.reason, observacao: existingSanction.observacao, code: existingSanction.codigo || existingSanction.code };
+                dataToLoad = { level: existingSanction.nivel, date: existingSanction.data_sancao, reason: existingSanction.infracao, observacao: existingSanction.observacao, code: existingSanction.codigo };
             } else editingSanctionId = null;
             
             const title = document.getElementById('modalSanctionTitle');
@@ -480,7 +479,7 @@
             const authorSelect = document.getElementById('sanctionAuthor');
 
             document.getElementById('sanctionLevel').value = '';
-            document.getElementById('sanctionDate').valueAsDate = new Date();
+            document.getElementById('sanctionDate').value = ManausTime.toISODate();
             document.getElementById('sanctionReason').value = '';
             document.getElementById('sanctionObs').value = '';
             authorSelect.innerHTML = `<option value="${currentUser.id}">${currentUser.nome_completo} (Eu)</option>`;
@@ -511,22 +510,19 @@
         }
 
         function closeSanctionModal() { document.getElementById('sanctionModal').classList.add('hidden'); }
+        function openNewSanctionModal() { openSanctionModal(); }
 
         async function saveSanction() {
             const level = parseInt(document.getElementById('sanctionLevel').value);
             const reason = document.getElementById('sanctionReason').value;
             const date = document.getElementById('sanctionDate').value;
             const obs = document.getElementById('sanctionObs').value;
-
             if(!level || !reason || !date) return alert("Preencha todos os campos obrigatórios.");
-
             const payload = { ra_aluno: currentStudent.ra, id_autor: currentUser.id, nivel: level, infracao: reason, data_sancao: date, observacao: obs, codigo: editingSanctionId ? undefined : `${new Date().getFullYear()}/${Math.floor(Math.random() * 10000)}` };
             if(!payload.codigo) delete payload.codigo;
-
             let error;
             if(editingSanctionId) ({ error } = await window.supabaseClient.from('sancoes_disciplinares').update(payload).eq('id', editingSanctionId));
             else ({ error } = await window.supabaseClient.from('sancoes_disciplinares').insert(payload));
-
             if(error) alert("Erro: " + error.message);
             else { closeSanctionModal(); await renderHistory(); await checkAlerts(); renderGrid(document.getElementById('studentSearch').value); }
         }
@@ -547,8 +543,8 @@
         async function openEmailModal(level) {
             const labels = { 1: 'Notificações', 2: 'Advertências Verbais', 3: 'Advertências Escritas', 4: 'Suspensões' };
             const nextLevel = level < 4 ? labels[level + 1] : "medidas extremas";
-            const listText = currentStudent.history.filter(h => h.level === level).map(s => `- ${s.date.split('-').reverse().join('/')}: ${s.reason}`).join('\n');
-            const body = `Prezados Responsáveis,\n\nInformamos que o aluno(a) ${currentStudent.name_completo} (RA: ${currentStudent.ra}) atingiu o limite de 3 ${labels[level]} previstas no manual do aluno.\n\nHistórico de ocorrências deste nível:\n${listText}\n\nAlertamos que a reincidência levará à aplicação de ${nextLevel}.\n\nAtenciosamente,\nCoordenação Pedagógica FMM`;
+            const listText = currentStudent.history.filter(h => h.level === level).map(s => `- ${ManausTime.format(s.date)}: ${s.reason}`).join('\n');
+            const body = `Prezados Responsáveis,\n\nInformamos que o aluno(a) ${currentStudent.nome_completo} (RA: ${currentStudent.ra}) atingiu o limite de 3 ${labels[level]} previstas no manual do aluno.\n\nHistórico de ocorrências deste nível:\n${listText}\n\nAlertamos que a reincidência levará à aplicação de ${nextLevel}.\n\nAtenciosamente,\nCoordenação Pedagógica FMM`;
             document.getElementById('emailBody').value = body;
             document.getElementById('emailModal').classList.remove('hidden');
         }
@@ -559,7 +555,15 @@
             document.execCommand("copy");
             alert("Texto copiado!");
         }
-        function openNewSanctionModal() { openSanctionModal(); }
+
+        function openPhotoZoom() {
+            if(!currentStudent) return;
+            const modal = document.getElementById('photoModal');
+            document.getElementById('enlargedPhoto').src = document.getElementById('drawerAvatar').src;
+            document.getElementById('enlargedName').innerText = currentStudent.nome_completo;
+            modal.classList.remove('hidden');
+        }
+        function closePhotoZoom() { document.getElementById('photoModal').classList.add('hidden'); }
         function toggleSidebar() { if(window.SidebarComponent) SidebarComponent.toggleSidebar(); }
         async function logout() { if(window.SidebarComponent) SidebarComponent.logout(); }
         window.onload = init;

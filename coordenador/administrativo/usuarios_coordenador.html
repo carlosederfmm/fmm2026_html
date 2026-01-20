@@ -9,6 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
+    <!-- Importação de Constantes e Cliente Global -->
+    <script src="../../assets/js/constants.js"></script>
+    <script src="../../assets/js/supabase_client.js"></script>
     <!-- Importação do Componente de Sidebar -->
     <script src="../../sidebar.js"></script>
 
@@ -32,28 +35,22 @@
 
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; }
-        
         .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .sidebar-collapsed .sidebar-text, .sidebar-collapsed .sidebar-category-header, .sidebar-collapsed .chevron-icon, .sidebar-collapsed .sidebar-category-title { display: none; }
         .sidebar-collapsed .sidebar-item { justify-content: center; padding: 12px 0; }
         .sidebar-collapsed .logo-full { display: none; }
         .sidebar-collapsed .logo-short { display: block; }
         .logo-short { display: none; }
-
         .category-content { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(0,0,0,0.05); }
         .category-content.open { max-height: 1000px; }
         .rotate-180 { transform: rotate(180deg); }
-
         .modal-content::-webkit-scrollbar { width: 6px; }
         .modal-content::-webkit-scrollbar-track { background: transparent; }
         .modal-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in-up { animation: fadeInUp 0.3s ease-out forwards; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-
-        /* Estilo para as tags de nível */
         .level-tag { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px; border: 1px solid; margin-right: 4px; }
         .level-EF1 { background: #ecfccb; color: #3f6212; border-color: #d9f99d; }
         .level-EF2 { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
@@ -62,12 +59,8 @@
 </head>
 <body class="flex h-screen w-screen overflow-hidden">
 
-    <!-- SIDEBAR CONTAINER -->
-    <aside id="sidebar-container" class="sidebar-transition w-72 bg-fmm-dark text-white flex-shrink-0 flex flex-col shadow-2xl relative z-20">
-        <!-- Carregado via JS -->
-    </aside>
+    <aside id="sidebar-container" class="sidebar-transition w-72 bg-fmm-dark text-white flex-shrink-0 flex flex-col shadow-2xl relative z-20"></aside>
 
-    <!-- CONTEÚDO PRINCIPAL -->
     <main class="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden">
         <header class="bg-white h-20 border-b flex items-center justify-between px-8 z-10 shadow-sm flex-shrink-0">
             <div class="flex flex-col">
@@ -79,7 +72,6 @@
             </button>
         </header>
 
-        <!-- FILTROS -->
         <div class="px-8 pt-8 flex-shrink-0">
             <div class="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col md:flex-row gap-4">
                 <div class="flex-1 relative group">
@@ -90,7 +82,6 @@
             </div>
         </div>
 
-        <!-- TABELA -->
         <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
             <div class="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden">
                 <table class="w-full text-left border-collapse">
@@ -103,9 +94,7 @@
                             <th class="px-8 py-5 text-center">Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="usuariosTableBody" class="divide-y divide-slate-50">
-                        <!-- Conteúdo carregado dinamicamente -->
-                    </tbody>
+                    <tbody id="usuariosTableBody" class="divide-y divide-slate-50"></tbody>
                 </table>
             </div>
         </div>
@@ -113,19 +102,27 @@
 
     <!-- MODAL DE CADASTRO / EDIÇÃO -->
     <div id="usuarioModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-fmm-dark/60 backdrop-blur-sm p-4">
-        <div class="bg-white w-full max-w-xl rounded-[32px] shadow-2xl flex flex-col animate-fade-in-up overflow-hidden">
-            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-white">
+        <div class="bg-white w-full max-w-xl rounded-[32px] shadow-2xl flex flex-col animate-fade-in-up overflow-hidden max-h-[90vh]">
+            <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-[32px]">
                 <h2 class="text-2xl font-bold text-fmm-dark" id="modalTitle">Novo Cadastro</h2>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-slate-100">
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 p-2 rounded-full hover:bg-slate-100 transition-colors">
                     <i data-lucide="x" class="w-6 h-6"></i>
                 </button>
             </div>
 
             <div class="modal-content overflow-y-auto p-8 space-y-6 max-h-[70vh] custom-scrollbar">
                 <div class="space-y-4">
+                    <!-- ALERTA DE CONVITE -->
+                    <div class="p-4 bg-fmm-blue/5 border border-fmm-blue/10 rounded-2xl flex gap-4 items-start">
+                        <i data-lucide="info" class="w-5 h-5 text-fmm-blue mt-0.5"></i>
+                        <p class="text-[11px] text-slate-600 leading-relaxed font-medium">
+                            Ao cadastrar, o usuário receberá um e-mail institucional para confirmar sua conta e <span class="font-bold text-fmm-blue">definir sua própria senha de acesso</span>.
+                        </p>
+                    </div>
+
                     <div class="space-y-1.5">
                         <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Nome Completo</label>
-                        <input type="text" id="inNome" placeholder="Ex: Roberto Carlos Silva" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all">
+                        <input type="text" id="inNome" placeholder="Ex: Roberto Carlos Silva" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all font-medium">
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">E-mail Institucional</label>
@@ -139,138 +136,130 @@
                         <div class="space-y-1.5">
                             <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Cargo</label>
                             <select id="inCargo" onchange="toggleLevelSelector()" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all font-bold text-slate-600">
-                                <option value="diretor">Diretor</option>
-                                <option value="coordenador">Coordenador</option>
-                                <option value="professor">Professor</option>
-                                <option value="orientador">Orientador</option>
+                                <!-- Opções injetadas dinamicamente via DB_CONSTANTS -->
                             </select>
                         </div>
                     </div>
                     
-                    <!-- SELETOR DE NÍVEIS DE ACESSO (Oculto para Professores) -->
                     <div id="levelSelector" class="hidden space-y-2 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                         <label class="text-[11px] font-bold text-fmm-blue uppercase tracking-widest">Níveis de Ensino Permitidos</label>
-                        <p class="text-[10px] text-slate-400 mb-2">Selecione os segmentos que este coordenador pode gerenciar.</p>
                         <div class="flex gap-4">
                             <label class="flex items-center gap-2 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
-                                <input type="checkbox" name="accessLevel" value="EF1" class="w-4 h-4 text-fmm-lime rounded border-slate-300 focus:ring-fmm-lime">
-                                <span class="text-xs font-bold text-slate-600">EF1 (Fund. 1)</span>
+                                <input type="checkbox" name="accessLevel" id="lvl-EF1" value="EF1" class="w-4 h-4 text-fmm-lime rounded border-slate-300 focus:ring-fmm-lime">
+                                <span class="text-xs font-bold text-slate-600">EF1</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
-                                <input type="checkbox" name="accessLevel" value="EF2" class="w-4 h-4 text-fmm-blue rounded border-slate-300 focus:ring-fmm-blue">
-                                <span class="text-xs font-bold text-slate-600">EF2 (Fund. 2)</span>
+                                <input type="checkbox" name="accessLevel" id="lvl-EF2" value="EF2" class="w-4 h-4 text-fmm-blue rounded border-slate-300 focus:ring-fmm-blue">
+                                <span class="text-xs font-bold text-slate-600">EF2</span>
                             </label>
                             <label class="flex items-center gap-2 cursor-pointer p-2 hover:bg-white rounded-lg transition-colors">
-                                <input type="checkbox" name="accessLevel" value="EMT" class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500">
-                                <span class="text-xs font-bold text-slate-600">EMT (Técnico)</span>
+                                <input type="checkbox" name="accessLevel" id="lvl-EMT" value="EMT" class="w-4 h-4 text-orange-500 rounded border-slate-300 focus:ring-orange-500">
+                                <span class="text-xs font-bold text-slate-600">EMT</span>
                             </label>
                         </div>
-                    </div>
-
-                    <div id="passwordField" class="space-y-1.5">
-                        <label id="passwordLabel" class="text-[11px] font-bold text-slate-400 uppercase ml-1">Senha de Acesso</label>
-                        <input type="password" id="inSenha" placeholder="Mínimo 6 caracteres" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all">
-                        <p id="passwordHint" class="text-[10px] text-slate-400 italic mt-1">* A senha é obrigatória para novos cadastros.</p>
                     </div>
                 </div>
             </div>
 
             <div class="p-8 border-t bg-slate-50/50 rounded-b-[32px] flex justify-end gap-4">
-                <button onclick="closeModal()" class="px-6 py-3 text-sm font-bold text-slate-500">Cancelar</button>
+                <button onclick="closeModal()" class="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700 transition-all">Cancelar</button>
                 <button onclick="saveUsuario()" id="btnSave" class="px-10 py-3.5 bg-fmm-lime text-fmm-dark font-bold text-sm rounded-2xl shadow-xl hover:scale-105 transition-all">
-                    Salvar Usuário
+                    Finalizar Cadastro
                 </button>
             </div>
         </div>
     </div>
 
     <script>
-        const supabaseUrl = 'https://panxfescmzjdltthreqy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbnhmZXNjbXpqZGx0dGhyZXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTA5NDMsImV4cCI6MjA4MjYyNjk0M30.jSZVhw2TFD52zRV4NZUGUeXKBHedWXcdH7w_fXeoGhA';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
         let editingId = null;
 
         async function init() {
-            // Inicializar Sidebar Componentizada
             if(window.SidebarComponent) await SidebarComponent.render('sidebar-container');
-
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
             if (!user) return window.location.href = '../../index.html'; 
             
+            populateSelects();
             await fetchUsuarios();
             lucide.createIcons();
+        }
+
+        function populateSelects() {
+            const cargoSelect = document.getElementById('inCargo');
+            if (window.DB_CONSTANTS && cargoSelect) {
+                const roles = window.DB_CONSTANTS.ROLES;
+                const labels = {
+                    [roles.DIRETOR]: 'Diretor',
+                    [roles.COORDENADOR]: 'Coordenador',
+                    [roles.PROFESSOR]: 'Professor',
+                    [roles.ORIENTADOR]: 'Orientador'
+                };
+                cargoSelect.innerHTML = Object.values(roles).map(role => 
+                    `<option value="${role}">${labels[role]}</option>`
+                ).join('');
+            }
         }
 
         async function fetchUsuarios() {
             const termo = document.getElementById('searchInput').value;
             const body = document.getElementById('usuariosTableBody');
-            
-            let query = supabaseClient.from('perfis').select('*');
+            let query = window.supabaseClient.from('perfis').select('*');
             if (termo) query = query.ilike('nome_completo', `%${termo}%`);
-
+            
             const { data, error } = await query.order('nome_completo');
             if (error) return;
 
-            const cargoStyles = {
-                'diretor': 'bg-purple-100 text-purple-700',
-                'coordenador': 'bg-fmm-blue/10 text-fmm-blue',
-                'professor': 'bg-fmm-green/10 text-fmm-green',
-                'orientador': 'bg-orange-100 text-orange-700'
+            const cargoStyles = { 
+                'diretor': 'bg-purple-100 text-purple-700', 
+                'coordenador': 'bg-fmm-blue/10 text-fmm-blue', 
+                'professor': 'bg-fmm-green/10 text-fmm-green', 
+                'orientador': 'bg-orange-100 text-orange-700' 
             };
 
             body.innerHTML = data.map(u => {
-                // Renderizar tags de nível
                 let levelsHtml = '<span class="text-xs text-slate-300 italic">--</span>';
                 if (u.niveis_acesso && u.niveis_acesso.length > 0 && u.cargo !== 'professor') {
                     levelsHtml = u.niveis_acesso.map(lvl => `<span class="level-tag level-${lvl}">${lvl}</span>`).join('');
-                } else if (u.cargo === 'professor') {
-                    levelsHtml = '<span class="text-[10px] text-slate-400 font-medium">Via Grade</span>';
+                } else if (u.cargo === 'professor') { 
+                    levelsHtml = '<span class="text-[10px] text-slate-400 font-medium">Via Grade</span>'; 
                 }
 
                 return `
                 <tr class="hover:bg-slate-50/80 transition-all">
-                    <td class="px-8 py-5">
-                        <div class="flex flex-col">
-                            <span class="font-bold text-fmm-dark text-sm">${u.nome_completo}</span>
-                            <span class="text-[10px] text-slate-400 font-medium">${u.email}</span>
-                        </div>
-                    </td>
-                    <td class="px-6 py-5">
-                        <span class="px-3 py-1 ${cargoStyles[u.cargo] || 'bg-slate-100 text-slate-600'} text-[10px] font-bold rounded-full uppercase tracking-wider">
-                            ${u.cargo}
-                        </span>
-                    </td>
-                    <td class="px-6 py-5 text-center">
-                        <div class="flex justify-center gap-1">
-                            ${levelsHtml}
-                        </div>
-                    </td>
+                    <td class="px-8 py-5"><div class="flex flex-col"><span class="font-bold text-fmm-dark text-sm">${u.nome_completo}</span><span class="text-[10px] text-slate-400 font-medium">${u.email}</span></div></td>
+                    <td class="px-6 py-5"><span class="px-3 py-1 ${cargoStyles[u.cargo] || 'bg-slate-100 text-slate-600'} text-[10px] font-bold rounded-full uppercase tracking-wider">${u.cargo}</span></td>
+                    <td class="px-6 py-5 text-center"><div class="flex justify-center gap-1">${levelsHtml}</div></td>
                     <td class="px-6 py-5 text-center text-xs text-slate-500 font-medium">${u.telefone || '--'}</td>
                     <td class="px-8 py-5">
                         <div class="flex items-center justify-center gap-2">
-                            <button onclick='prepEdit(${JSON.stringify(u)})' class="p-2.5 text-slate-400 hover:text-fmm-blue hover:bg-fmm-blue/10 rounded-xl transition-all">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="deleteUser('${u.id}')" class="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                            <button onclick='prepEdit(${JSON.stringify(u)})' class="p-2.5 text-slate-400 hover:text-fmm-blue hover:bg-fmm-blue/10 rounded-xl transition-all shadow-sm"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="deleteUser('${u.id}')" class="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all shadow-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </td>
-                </tr>
-            `}).join('');
+                </tr>`}).join('');
             lucide.createIcons();
         }
 
         function toggleLevelSelector() {
             const cargo = document.getElementById('inCargo').value;
             const selector = document.getElementById('levelSelector');
-            // Mostrar seletor se for gestão
-            if(['coordenador', 'diretor', 'orientador'].includes(cargo)) {
-                selector.classList.remove('hidden');
-            } else {
-                selector.classList.add('hidden');
-            }
+            const roles = window.DB_CONSTANTS?.ROLES || {};
+            if([roles.COORDENADOR, roles.DIRETOR, roles.ORIENTADOR].includes(cargo)) selector.classList.remove('hidden');
+            else selector.classList.add('hidden');
+        }
+
+        function openModal() {
+            editingId = null;
+            document.getElementById('modalTitle').innerText = "Novo Cadastro";
+            document.getElementById('btnSave').innerText = "Finalizar Cadastro";
+            document.getElementById('inEmail').disabled = false;
+            
+            // Limpar formulário
+            document.querySelectorAll('#usuarioModal input').forEach(i => { if(i.type === 'checkbox') i.checked = false; else i.value = ''; });
+            
+            document.getElementById('usuarioModal').classList.remove('hidden');
+            toggleLevelSelector();
+            lucide.createIcons();
         }
 
         function prepEdit(user) {
@@ -282,131 +271,90 @@
             document.getElementById('inEmail').disabled = true; 
             document.getElementById('inPhone').value = user.telefone || '';
             document.getElementById('inCargo').value = user.cargo;
-            
-            // Popula os checkboxes
-            toggleLevelSelector(); // Mostra/Esconde baseado no cargo
+            toggleLevelSelector();
             const checkboxes = document.querySelectorAll('input[name="accessLevel"]');
-            checkboxes.forEach(cb => cb.checked = false); // Reset
-            if (user.niveis_acesso) {
-                checkboxes.forEach(cb => {
-                    if (user.niveis_acesso.includes(cb.value)) cb.checked = true;
-                });
-            }
-
-            document.getElementById('passwordLabel').innerText = "Nova Senha (Opcional)";
-            document.getElementById('inSenha').placeholder = "Deixe em branco para manter a atual";
-            document.getElementById('passwordHint').innerText = "* Preencha apenas se desejar redefinir a senha.";
-            openModal();
+            checkboxes.forEach(cb => cb.checked = (user.niveis_acesso || []).includes(cb.value));
+            document.getElementById('usuarioModal').classList.remove('hidden');
+            lucide.createIcons();
         }
 
         async function saveUsuario() {
-            const nome = document.getElementById('inNome').value;
-            const email = document.getElementById('inEmail').value;
-            const phone = document.getElementById('inPhone').value;
-            const cargo = document.getElementById('inCargo').value;
-            const senha = document.getElementById('inSenha').value;
-            
-            // Captura níveis selecionados
+            const nome = document.getElementById('inNome').value, 
+                  email = document.getElementById('inEmail').value, 
+                  phone = document.getElementById('inPhone').value, 
+                  cargo = document.getElementById('inCargo').value;
+
             const levels = Array.from(document.querySelectorAll('input[name="accessLevel"]:checked')).map(cb => cb.value);
-
             const btn = document.getElementById('btnSave');
-
+            
             if (!nome || !email) return alert("Preencha Nome e E-mail.");
-            // Validação simples: Coordenador deve ter pelo menos um nível
-            if ((cargo === 'coordenador') && levels.length === 0) {
-                 return alert("Selecione pelo menos um nível de ensino para o coordenador.");
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = "Processando...";
+            
+            btn.disabled = true; 
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Processando...';
+            lucide.createIcons();
 
             try {
-                let userId = editingId;
-
                 if (editingId) {
-                    // Update
-                    const { error } = await supabaseClient
-                        .from('perfis')
-                        .update({ 
-                            nome_completo: nome, 
-                            telefone: phone, 
-                            cargo: cargo,
-                            niveis_acesso: levels 
-                        })
-                        .eq('id', editingId);
+                    const { error } = await window.supabaseClient.from('perfis').update({ 
+                        nome_completo: nome, 
+                        telefone: phone, 
+                        cargo: cargo, 
+                        niveis_acesso: levels 
+                    }).eq('id', editingId);
                     if (error) throw error;
-                    alert("Perfil atualizado!");
+                    alert("Perfil atualizado com sucesso!");
                 } else {
-                    // Create
-                    if (!senha || senha.length < 6) throw new Error("Senha obrigatória (mín. 6 caracteres).");
+                    /** * AJUSTE SPRINT 3: 
+                     * Como o administrador não define mais a senha (fluxo de convite via e-mail),
+                     * geramos uma senha aleatória temporária complexa apenas para criar o registro no Auth.
+                     * O usuário usará o link do e-mail ou "Esqueci minha senha" para entrar.
+                     */
+                    const tempPassword = Math.random().toString(36).slice(-10) + "!" + Math.random().toString(36).toUpperCase().slice(-4);
                     
-                    const { data: authData, error: authError } = await supabaseClient.auth.signUp({ 
-                        email, 
-                        password: senha, 
-                        options: { 
-                            data: { 
-                                full_name: nome, 
-                                role: cargo, 
-                                phone: phone
-                                // levels será atualizado via update posterior ou trigger se configurado, 
-                                // mas faremos update explícito abaixo para garantir
-                            } 
-                        } 
+                    const { data: rpcRes, error: rpcError } = await window.supabaseClient.rpc('admin_create_user', { 
+                        p_email: email, 
+                        p_password: tempPassword, 
+                        p_full_name: nome, 
+                        p_role: cargo, 
+                        p_phone: phone 
                     });
-                    
-                    if (authError) throw authError;
-                    userId = authData.user?.id;
 
-                    // Forçar atualização dos níveis logo após criar (caso a trigger de criação de perfil não pegue o metadata customizado 'levels')
-                    if (userId) {
-                        // Pequeno delay para garantir que a trigger de criação do perfil rodou
-                        setTimeout(async () => {
-                            await supabaseClient.from('perfis').update({ niveis_acesso: levels }).eq('id', userId);
-                        }, 1000);
+                    if (rpcError) throw rpcError;
+                    if (!rpcRes.success) throw new Error(rpcRes.message);
+                    
+                    const newUserId = rpcRes.user_id;
+                    if (newUserId) {
+                        await window.supabaseClient.from('perfis').update({ niveis_acesso: levels }).eq('id', newUserId);
                     }
                     
-                    alert("Usuário cadastrado!");
+                    alert("Usuário cadastrado! Um convite foi enviado ao e-mail institucional.");
                 }
-                closeModal();
-                fetchUsuarios();
-            } catch (err) {
-                alert("Erro: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = editingId ? "Atualizar Perfil" : "Salvar Usuário";
+                closeModal(); fetchUsuarios();
+            } catch (err) { 
+                alert("Erro: " + err.message); 
+            } finally { 
+                btn.disabled = false; 
+                btn.innerHTML = editingId ? "Atualizar Perfil" : "Finalizar Cadastro"; 
                 lucide.createIcons();
             }
         }
 
-        async function deleteUser(id) {
-            if (!confirm("Remover acesso deste usuário?")) return;
-            const { error } = await supabaseClient.from('perfis').delete().eq('id', id);
-            if (error) alert(error.message);
-            else fetchUsuarios();
-        }
-
-        // --- STUBS ---
-        function toggleSidebar() { if(window.SidebarComponent) SidebarComponent.toggleSidebar(); }
-        function toggleCategory(id) { if(window.SidebarComponent) SidebarComponent.toggleCategory(id); }
-        async function handleLogout() { if(window.SidebarComponent) SidebarComponent.logout(); }
-
-        function openModal() { document.getElementById('usuarioModal').classList.remove('hidden'); }
-        function closeModal() { 
-            document.getElementById('usuarioModal').classList.add('hidden');
-            editingId = null;
-            document.getElementById('modalTitle').innerText = "Novo Cadastro";
-            document.getElementById('btnSave').innerText = "Salvar Usuário";
-            document.getElementById('inEmail').disabled = false;
-            document.getElementById('passwordLabel').innerText = "Senha de Acesso";
-            document.getElementById('inSenha').placeholder = "Mínimo 6 caracteres";
-            document.getElementById('passwordHint').innerText = "* A senha é obrigatória para novos cadastros.";
-            document.querySelectorAll('#usuarioModal input').forEach(i => {
-                if(i.type === 'checkbox') i.checked = false;
-                else i.value = '';
+        function deleteUser(id) {
+            if(!confirm("Remover este acesso permanentemente?")) return;
+            window.supabaseClient.from('perfis').delete().eq('id', id).then(({error}) => {
+                if(error) alert(error.message); else fetchUsuarios();
             });
-            toggleLevelSelector();
         }
 
+        function closeModal() { 
+            document.getElementById('usuarioModal').classList.add('hidden'); 
+            editingId = null;
+        }
+
+        function toggleSidebar() { if (window.SidebarComponent) SidebarComponent.toggleSidebar(); }
+        function toggleCategory(id) { if (window.SidebarComponent) SidebarComponent.toggleCategory(id); }
+        async function handleLogout() { if (confirm("Deseja sair?")) { await window.supabaseClient.auth.signOut(); window.location.href = "../../index.html"; } }
+        
         window.onload = init;
     </script>
 </body>
