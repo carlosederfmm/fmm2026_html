@@ -9,7 +9,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Importação do Componente de Sidebar -->
+    <!-- TASK 3.2.1: Importação do Cliente Global Supabase -->
+    <script src="../assets/js/supabase_client.js"></script>
+    <!-- TASK 2.3.1: Importação do Componente de Sidebar -->
     <script src="../sidebar.js"></script>
 
     <script>
@@ -40,7 +42,6 @@
         .logo-short { display: none; }
         .category-content { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(0,0,0,0.05); }
         .category-content.open { max-height: 1000px; }
-        .chevron-icon { transition: transform 0.3s ease; }
         .rotate-180 { transform: rotate(180deg); }
 
         .grade-input { 
@@ -70,22 +71,11 @@
         .top-bar-select { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 12px; font-size: 12px; font-weight: 700; color: #003c5b; outline: none; transition: all 0.2s; min-width: 140px; }
         .top-bar-select:focus { border-color: #00638f; background: white; box-shadow: 0 0 0 4px rgba(0, 99, 143, 0.05); }
 
-        /* TASK 5.2.3: Replicação dos estilos de intervenção para o Professor */
         .intervention-wrapper { position: relative; display: inline-block; }
         .intervention-badge { 
-            position: absolute; 
-            top: -6px; 
-            right: -6px; 
-            background: #003c5b; 
-            color: #c8d400; 
-            border-radius: 5px; 
-            padding: 2.5px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            z-index: 25; 
-            border: 1.5px solid white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: absolute; top: -6px; right: -6px; background: #003c5b; color: #c8d400; border-radius: 5px; 
+            padding: 2.5px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 25; border: 1.5px solid white;
+            display: flex; align-items: center; justify-content: center;
         }
 
         @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
@@ -175,17 +165,15 @@
     <!-- TOAST -->
     <div id="toast" class="fixed bottom-8 right-8 z-50 translate-y-20 opacity-0 transition-all duration-500">
         <div class="bg-slate-900 text-white px-8 py-5 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/5">
-            <div class="w-8 h-8 bg-fmm-lime/20 rounded-full flex items-center justify-center">
-                <i data-lucide="check" class="w-4 h-4 text-fmm-lime"></i>
+            <div class="w-8 h-8 bg-fmm-lime/20 rounded-full flex items-center justify-center" id="toast-icon-container">
+                <i data-lucide="check" class="w-4 h-4 text-fmm-lime" id="toast-icon"></i>
             </div>
             <span class="text-xs font-bold tracking-tight" id="toast-msg">Sincronizado</span>
         </div>
     </div>
 
     <script>
-        const supabaseUrl = 'https://panxfescmzjdltthreqy.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbnhmZXNjbXpqZGx0dGhyZXF5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcwNTA5NDMsImV4cCI6MjA4MjYyNjk0M30.jSZVhw2TFD52zRV4NZUGUeXKBHedWXcdH7w_fXeoGhA';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        // TASK 3.2.1: supabaseClient agora é global vindo de ../assets/js/supabase_client.js
 
         let currentUser = null;
         let saveTimers = {};
@@ -206,10 +194,10 @@
         }
 
         async function init() {
-            if(window.SidebarComponent) await SidebarComponent.render('sidebar-container');
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            if(window.SidebarComponent) await window.SidebarComponent.render('sidebar-container');
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
             if (!user) return window.location.href = '../index.html';
-            const { data: profile } = await supabaseClient.from('perfis').select('*').eq('id', user.id).single();
+            const { data: profile } = await window.supabaseClient.from('perfis').select('*').eq('id', user.id).single();
             currentUser = profile;
             await populateSelectors();
             lucide.createIcons();
@@ -220,14 +208,18 @@
             const selectD = document.getElementById('selectDisc');
             let turmas = [], disciplinas = [];
             if (currentUser.cargo === 'coordenador' || currentUser.cargo === 'diretor') {
-                const { data: t } = await supabaseClient.from('turmas').select('*').order('nome');
-                const { data: d } = await supabaseClient.from('disciplinas').select('*').order('nome');
+                const { data: t } = await window.supabaseClient.from('turmas').select('*').order('nome');
+                const { data: d } = await window.supabaseClient.from('disciplinas').select('*').order('nome');
                 turmas = t || []; disciplinas = d || [];
             } else {
-                const { data: grade } = await supabaseClient.from('grade_horaria').select('id_turma, turmas(*)').eq('id_professor', currentUser.id);
-                turmas = Array.from(new Map(grade.map(g => [g.id_turma, g.turmas])).values());
-                const { data: vinculos = [] } = await supabaseClient.from('professor_disciplinas').select('sigla_disciplina, disciplinas(*)').eq('id_professor', currentUser.id);
+                const { data: grade } = await window.supabaseClient.from('grade_horaria').select('id_turma, turmas(*)').eq('id_professor', currentUser.id);
+                turmas = Array.from(new Map(grade.map(g => [g.id_turma, g.turmas])).values())
+                             .filter(t => t !== null)
+                             .sort((a, b) => a.nome.localeCompare(b.nome, undefined, { numeric: true, sensitivity: 'base' }));
+
+                const { data: vinculos = [] } = await window.supabaseClient.from('professor_disciplinas').select('sigla_disciplina, disciplinas(*)').eq('id_professor', currentUser.id);
                 disciplinas = vinculos.map(v => v.disciplinas).filter(d => d !== null);
+                disciplinas.sort((a, b) => a.nome.localeCompare(b.nome));
             }
             selectT.innerHTML = '<option value="">Turma...</option>' + turmas.map(t => `<option value="${t.id}">${t.nome} (${t.serie})</option>`).join('');
             selectD.innerHTML = '<option value="">Disciplina...</option>' + disciplinas.map(d => `<option value="${d.sigla}" data-tipo="${d.tipo}">${d.nome} (${d.sigla})</option>`).join('');
@@ -261,7 +253,7 @@
             if (document.getElementById('period-tabs')) document.getElementById('period-tabs').classList.toggle('hidden', currentDiscType !== 'BCC');
 
             try {
-                const { data: matriculas } = await supabaseClient.from('matriculas')
+                const { data: matriculas } = await window.supabaseClient.from('matriculas')
                     .select('id, ra_aluno, alunos:ra_aluno(nome_completo, url_foto)')
                     .eq('id_turma', turmaId)
                     .eq('status', 'CURSANDO')
@@ -269,11 +261,11 @@
                 globalMatriculas = matriculas || [];
                 
                 if (currentDiscType === 'BCC') {
-                    const { data: nb } = await supabaseClient.from('notas_basica').select('*').eq('sigla_disciplina', currentDiscSigla);
-                    const { data: ab } = await supabaseClient.from('anual_basica').select('*').eq('sigla_disciplina', currentDiscSigla);
+                    const { data: nb } = await window.supabaseClient.from('notas_basica').select('*').eq('sigla_disciplina', currentDiscSigla);
+                    const { data: ab } = await window.supabaseClient.from('anual_basica').select('*').eq('sigla_disciplina', currentDiscSigla);
                     globalNotas = nb || []; globalAnual = ab || [];
                 } else {
-                    const { data: nt } = await supabaseClient.from('notas_tecnica').select('*').eq('sigla_disciplina', currentDiscSigla);
+                    const { data: nt } = await window.supabaseClient.from('notas_tecnica').select('*').eq('sigla_disciplina', currentDiscSigla);
                     globalNotas = nt || [];
                 }
 
@@ -292,20 +284,12 @@
             if (!header || !body) return;
             if (currentDiscType === 'BCC') renderBCC(header, body);
             else renderTecnica(header, body);
-            lucide.createIcons(); // Garante renderização dos ícones de intervenção
+            lucide.createIcons(); 
         }
 
-        /**
-         * TASK 5.2.3: COMPONENTE DE INDICADOR VISUAL (PROFESSOR)
-         * Replica o badge usado pelo coordenador para garantir transparência.
-         */
         function renderInterventionIndicator(isChanged) {
             if (!isChanged) return '';
-            return `
-                <div class="intervention-badge" title="Nota alterada administrativamente pela Coordenação">
-                    <i data-lucide="shield-check" class="w-3 h-3"></i>
-                </div>
-            `;
+            return `<div class="intervention-badge" title="Nota alterada administrativamente pela Coordenação"><i data-lucide="shield-check" class="w-3 h-3"></i></div>`;
         }
 
         function renderBCC(header, body) {
@@ -371,7 +355,6 @@
             }).join('');
         }
 
-        // TASK 5.2.3: Inputs do professor agora suportam o indicador de intervenção visual
         function renderInput(matId, periodo, field, val, disabled = false, isChanged = false) {
             const isLow = val < 6 && val !== '' && val !== 0;
             const inputId = `in-${matId}-${field}-${periodo}`;
@@ -419,19 +402,12 @@
                 let error, data;
                 const conflict = type === 'ANUAL' ? 'id_matricula,sigla_disciplina' : 'id_matricula,sigla_disciplina,periodo';
                 const table = type === 'BCC' ? 'notas_basica' : (type === 'ANUAL' ? 'anual_basica' : 'notas_tecnica');
-                
                 const payload = { id_matricula: matId, sigla_disciplina: sigla, [field]: val };
                 if (periodo && type !== 'ANUAL') payload.periodo = periodo;
 
-                ({ data, error } = await supabaseClient
-                    .from(table)
-                    .upsert(payload, { onConflict: conflict })
-                    .select()
-                    .single());
-                
+                ({ data, error } = await window.supabaseClient.from(table).upsert(payload, { onConflict: conflict }).select().single());
                 if (error) throw error;
 
-                // ATUALIZAÇÃO IMEDIATA DO DOM
                 if (type === 'BCC') {
                     const ntDisplay = document.getElementById(`nt-display-${matId}-${periodo}`);
                     if (ntDisplay && data.nt !== undefined) {
@@ -446,7 +422,6 @@
                     }
                     const maDisplay = document.getElementById(`media-anual-display-${matId}`);
                     if(maDisplay && data.media_anual !== undefined) maDisplay.innerText = Number(data.media_anual).toFixed(1);
-
                 } else if (type === 'TEC') {
                     const m1Display = document.getElementById(`m1-display-${matId}`);
                     if(m1Display && data.media_1 !== undefined) m1Display.innerText = Number(data.media_1).toFixed(1);
@@ -459,23 +434,14 @@
                     }
                 }
                 showToast("Sincronizado");
-            } catch (err) { console.error("Erro ao salvar:", err); } 
+            } catch (err) { console.error(err); } 
             finally { const syncStatus = document.getElementById('sync-status'); if(syncStatus) syncStatus.classList.add('hidden'); }
         }
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            if(!t) return;
-            const msgEl = document.getElementById('toast-msg');
-            if(msgEl) msgEl.innerText = msg;
-            t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-20', 'translate-y-0');
-            setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-20'); }, 2500);
-        }
-
+        function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-20', 'translate-y-0'); setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-20'); }, 2500); }
         function openPhotoModal(url, name) { const modal = document.getElementById('photoModal'); document.getElementById('enlargedPhoto').src = url; document.getElementById('enlargedName').innerText = name; modal.classList.remove('hidden'); }
         function closePhotoModal() { document.getElementById('photoModal').classList.add('hidden'); }
-        function toggleSidebar() { if(window.SidebarComponent) SidebarComponent.toggleSidebar(); }
-        async function handleLogout() { if(confirm("Deseja encerrar a sessão?")) { await supabaseClient.auth.signOut(); window.location.href = "../index.html"; } }
+        async function logout() { if(confirm("Deseja sair?")) { await window.supabaseClient.auth.signOut(); window.location.href = "../index.html"; } }
         window.onload = init;
     </script>
 </body>

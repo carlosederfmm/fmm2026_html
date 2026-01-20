@@ -9,9 +9,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <!-- Importação do Componente de Sidebar -->
-    <script src="../sidebar.js"></script>
+    <!-- TASK 3.2.1: Importação do Cliente Global Supabase -->
     <script src="../assets/js/supabase_client.js"></script>
+    <!-- TASK 2.3.1: Importação do Componente de Sidebar -->
+    <script src="../sidebar.js"></script>
 
     <script>
         tailwind.config = {
@@ -34,7 +35,7 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; overflow: hidden; }
         
-        /* Estilos da Sidebar (Requeridos para o container funcionar corretamente) */
+        /* Estilos da Sidebar */
         .sidebar-transition { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .sidebar-collapsed .sidebar-text, .sidebar-collapsed .sidebar-category-header, .sidebar-collapsed .chevron-icon, .sidebar-collapsed .sidebar-category-title { display: none; }
         .sidebar-collapsed .sidebar-item { justify-content: center; padding: 12px 0; }
@@ -42,100 +43,37 @@
         .sidebar-collapsed .logo-short { display: block; }
         .logo-short { display: none; }
         
-        /* Estilos necessários para o Acordeão da Sidebar */
         .category-content { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: rgba(0,0,0,0.05); }
         .category-content.open { max-height: 1000px; }
         .rotate-180 { transform: rotate(180deg); }
         .sidebar-item-active { background-color: rgba(200, 212, 0, 0.15); border-left: 4px solid #c8d400; color: #ffffff !important; }
 
-        /* Lógica de Congelamento (Sticky) com Bordas Reforçadas */
-        .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 30;
-            background: #0f172a; 
-            border-bottom: 2px solid #334155;
-        }
-        .sticky-col { 
-            position: sticky; 
-            left: 0; 
-            background: white; 
-            z-index: 20; 
-            border-right: 2px solid #cbd5e1;
-        }
-        .sticky-intersect {
-            position: sticky;
-            top: 0;
-            left: 0;
-            z-index: 40;
-            background: #0f172a;
-            border-right: 2px solid #334155;
-            border-bottom: 2px solid #334155;
-        }
+        /* Lógica de Congelamento (Sticky) */
+        .sticky-header { position: sticky; top: 0; z-index: 30; background: #0f172a; border-bottom: 2px solid #334155; }
+        .sticky-col { position: sticky; left: 0; background: white; z-index: 20; border-right: 2px solid #cbd5e1; }
+        .sticky-intersect { position: sticky; top: 0; left: 0; z-index: 40; background: #0f172a; border-right: 2px solid #334155; border-bottom: 2px solid #334155; }
 
-        /* Estilo das Linhas e Células para Visibilidade */
-        .attendance-cell {
-            border-right: 1px solid #e2e8f0;
-            border-bottom: 1px solid #e2e8f0;
-        }
+        .attendance-cell { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
         .group:hover .sticky-col { background: #f8fafc; }
         .group:hover td { background-color: #f1f5f9; }
 
         /* Botões de Presença */
         .btn-presence {
-            width: 120px;
-            padding: 10px 0;
-            border-radius: 14px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            width: 120px; padding: 10px 0; border-radius: 14px; font-size: 11px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
-        .btn-present {
-            background-color: #22c55e;
-            color: white;
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-        }
-        .btn-absent {
-            background-color: #ef444415;
-            color: #ef4444;
-            border: 2px solid #ef444430;
-        }
-        .btn-presence:hover { transform: translateY(-2px); }
-        .btn-presence:active { transform: translateY(0); }
+        .btn-present { background-color: #22c55e; color: white; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+        .btn-absent { background-color: #ef444415; color: #ef4444; border: 2px solid #ef444430; }
 
         .custom-scrollbar::-webkit-scrollbar { height: 10px; width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 3px solid #f1f5f9; }
 
-        .student-photo {
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            object-fit: cover;
-            cursor: pointer;
-            transition: transform 0.2s;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
+        .student-photo { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; cursor: pointer; transition: transform 0.2s; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .student-photo:hover { transform: scale(1.1); }
 
-        .top-bar-select {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 8px 12px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #003c5b;
-            outline: none;
-            transition: all 0.2s;
-        }
+        .top-bar-select { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px 12px; font-size: 12px; font-weight: 700; color: #003c5b; outline: none; transition: all 0.2s; }
         .top-bar-select:focus { border-color: #00638f; background: white; box-shadow: 0 0 0 4px rgba(0, 99, 143, 0.05); }
 
         @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
@@ -144,14 +82,12 @@
 </head>
 <body class="flex h-screen w-screen overflow-hidden">
 
-    <!-- SIDEBAR CONTAINER (Componente injetado via JS) -->
-    <aside id="sidebar-container" class="sidebar-transition w-72 bg-fmm-dark text-white flex-shrink-0 flex flex-col shadow-2xl relative z-20">
-        <!-- Carregado via sidebar.js -->
-    </aside>
+    <!-- SIDEBAR CONTAINER -->
+    <aside id="sidebar-container" class="sidebar-transition w-72 bg-fmm-dark text-white flex-shrink-0 flex flex-col shadow-2xl relative z-20"></aside>
 
     <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
         
-        <!-- TOP BAR CONSOLIDADA -->
+        <!-- TOP BAR -->
         <header class="bg-white h-20 border-b flex items-center justify-between px-8 z-30 shadow-sm flex-shrink-0">
             <div class="flex items-center gap-6">
                 <h1 class="text-base font-black text-fmm-dark tracking-tight flex items-center gap-2">
@@ -239,35 +175,29 @@
     </div>
 
     <script>
-        
+        // TASK 3.2.1: supabaseClient agora é global vindo de ../assets/js/supabase_client.js
 
         let currentUser = null;
         let globalMatriculas = [];
-        let localPresenceState = {}; // RA -> { tempo1: true, tempo2: true }
+        let localPresenceState = {};
         let currentDiscSigla = '';
         let currentTurmaId = '';
 
-        /**
-         * FUNÇÃO PARA TRATAR LINKS DO GOOGLE DRIVE
-         */
         function formatDriveUrl(url) {
             if (!url) return null;
             if (url.includes('drive.google.com') && url.includes('/file/d/')) {
                 const idMatch = url.match(/\/d\/(.*?)\//);
-                if (idMatch && idMatch[1]) {
-                    return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
-                }
+                if (idMatch && idMatch[1]) return `https://lh3.googleusercontent.com/d/${idMatch[1]}`;
             }
             return url;
         }
 
         async function init() {
-            // Inicializar Sidebar Componentizada
             if(window.SidebarComponent) await SidebarComponent.render('sidebar-container');
 
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
             if (!user) return window.location.href = '../index.html';
-            const { data: profile } = await supabaseClient.from('perfis').select('*').eq('id', user.id).single();
+            const { data: profile } = await window.supabaseClient.from('perfis').select('*').eq('id', user.id).single();
             currentUser = profile;
 
             document.getElementById('selectDate').valueAsDate = new Date();
@@ -275,10 +205,7 @@
             lucide.createIcons();
         }
 
-        // --- STUB PARA TOGGLE SIDEBAR (Para compatibilidade com o botão) ---
-        function toggleSidebar() {
-            if(window.SidebarComponent) SidebarComponent.toggleSidebar();
-        }
+        function toggleSidebar() { if(window.SidebarComponent) SidebarComponent.toggleSidebar(); }
 
         async function populateSelectors() {
             const selectT = document.getElementById('selectTurma');
@@ -286,14 +213,19 @@
             let turmas = [], disciplinas = [];
 
             if (currentUser.cargo === 'coordenador' || currentUser.cargo === 'diretor') {
-                const { data: t } = await supabaseClient.from('turmas').select('*').order('nome');
-                const { data: d } = await supabaseClient.from('disciplinas').select('*').order('nome');
+                const { data: t } = await window.supabaseClient.from('turmas').select('*').order('nome');
+                const { data: d } = await window.supabaseClient.from('disciplinas').select('*').order('nome');
                 turmas = t || []; disciplinas = d || [];
             } else {
-                const { data: grade } = await supabaseClient.from('grade_horaria').select('id_turma, turmas(*)').eq('id_professor', currentUser.id);
-                turmas = Array.from(new Map(grade.map(g => [g.id_turma, g.turmas])).values());
-                const { data: vinculos = [] } = await supabaseClient.from('professor_disciplinas').select('sigla_disciplina, disciplinas(*)').eq('id_professor', currentUser.id);
+                const { data: grade } = await window.supabaseClient.from('grade_horaria').select('id_turma, turmas(*)').eq('id_professor', currentUser.id);
+                turmas = Array.from(new Map(grade.map(g => [g.id_turma, g.turmas])).values())
+                             .filter(t => t !== null);
+                
+                turmas.sort((a, b) => a.nome.localeCompare(b.nome, undefined, { numeric: true, sensitivity: 'base' }));
+
+                const { data: vinculos = [] } = await window.supabaseClient.from('professor_disciplinas').select('sigla_disciplina, disciplinas(*)').eq('id_professor', currentUser.id);
                 disciplinas = vinculos.map(v => v.disciplinas).filter(d => d !== null);
+                disciplinas.sort((a, b) => a.nome.localeCompare(b.nome));
             }
             selectT.innerHTML = '<option value="">Turma...</option>' + turmas.map(t => `<option value="${t.id}">${t.nome} (${t.serie})</option>`).join('');
             selectD.innerHTML = '<option value="">Disciplina...</option>' + disciplinas.map(d => `<option value="${d.sigla}" data-tipo="${d.tipo}">${d.nome} (${d.sigla})</option>`).join('');
@@ -318,21 +250,16 @@
             document.getElementById('table-wrapper').classList.add('hidden');
 
             try {
-                const { data: matriculas } = await supabaseClient.from('matriculas')
+                const { data: matriculas } = await window.supabaseClient.from('matriculas')
                     .select('ra_aluno, alunos(nome_completo, url_foto)')
                     .eq('id_turma', currentTurmaId)
                     .eq('status', 'CURSANDO')
                     .eq('ano_letivo', 2026);
                 
                 globalMatriculas = matriculas || [];
+                globalMatriculas.sort((a, b) => (a.alunos?.nome_completo || "").localeCompare((b.alunos?.nome_completo || "")));
 
-                globalMatriculas.sort((a, b) => {
-                    const nomeA = (a.alunos?.nome_completo || "").toUpperCase();
-                    const nomeB = (b.alunos?.nome_completo || "").toUpperCase();
-                    return nomeA.localeCompare(nomeB);
-                });
-
-                const { data: freq } = await supabaseClient.from('frequencias')
+                const { data: freq } = await window.supabaseClient.from('frequencias')
                     .select('*')
                     .eq('id_turma', currentTurmaId)
                     .eq('sigla_disciplina', currentDiscSigla)
@@ -341,10 +268,8 @@
                 localPresenceState = {};
                 globalMatriculas.forEach(m => {
                     localPresenceState[m.ra_aluno] = { tempo1: true, tempo2: true };
-                    
                     const f1 = freq.find(f => f.ra_aluno === m.ra_aluno && f.numero_tempo === 1);
                     if(f1) localPresenceState[m.ra_aluno].tempo1 = f1.presente;
-
                     const f2 = freq.find(f => f.ra_aluno === m.ra_aluno && f.numero_tempo === 2);
                     if(f2) localPresenceState[m.ra_aluno].tempo2 = f2.presente;
                 });
@@ -352,16 +277,10 @@
                 renderTable();
                 document.getElementById('table-wrapper').classList.remove('hidden');
                 document.getElementById('btnSave').classList.remove('hidden');
-                
                 if(freq && freq.length > 0) document.getElementById('btnDelete').classList.remove('hidden');
                 else document.getElementById('btnDelete').classList.add('hidden');
-
-            } catch (err) {
-                console.error(err);
-            } finally {
-                document.getElementById('loading-overlay').classList.add('hidden');
-                lucide.createIcons();
-            }
+            } catch (err) { console.error(err); } 
+            finally { document.getElementById('loading-overlay').classList.add('hidden'); lucide.createIcons(); }
         }
 
         function renderTable() {
@@ -369,67 +288,22 @@
             const body = document.getElementById('tableBody');
             const tempos = parseInt(document.getElementById('selectTempos').value);
 
-            let headHTML = `<tr>
-                <th class="px-8 py-6 sticky-intersect min-w-[320px] text-white text-[10px] font-black uppercase tracking-widest">Estudante</th>`;
-            
-            if (tempos === 1) {
-                headHTML += `<th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest">Controle de Frequência</th>`;
-            } else {
-                headHTML += `
-                    <th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest border-r border-white/10">Tempo 1</th>
-                    <th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest">Tempo 2</th>
-                `;
-            }
-            headHTML += `</tr>`;
-            header.innerHTML = headHTML;
+            let headHTML = `<tr><th class="px-8 py-6 sticky-intersect min-w-[320px] text-white text-[10px] font-black uppercase tracking-widest">Estudante</th>`;
+            if (tempos === 1) headHTML += `<th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest">Controle de Frequência</th>`;
+            else headHTML += `<th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest border-r border-white/10">Tempo 1</th><th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest">Tempo 2</th>`;
+            header.innerHTML = headHTML + `</tr>`;
 
             body.innerHTML = globalMatriculas.map(m => {
                 const p = localPresenceState[m.ra_aluno];
-                const formattedUrl = formatDriveUrl(m.alunos?.url_foto);
-                const urlFoto = formattedUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.alunos?.nome_completo)}&background=random&color=fff`;
+                const urlFoto = formatDriveUrl(m.alunos?.url_foto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.alunos?.nome_completo)}&background=random&color=fff`;
 
-                let rowHTML = `
-                <tr class="group transition-colors">
-                    <td class="px-8 py-5 font-bold text-fmm-dark sticky-col attendance-cell">
-                        <div class="flex items-center gap-4">
-                            <img src="${urlFoto}" class="student-photo" onclick="openPhotoModal('${urlFoto}', '${m.alunos?.nome_completo}')" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(m.alunos?.nome_completo)}&background=random&color=fff'">
-                            <div class="flex flex-col">
-                                <span class="text-sm font-extrabold truncate max-w-[180px]">${m.alunos?.nome_completo || 'N/A'}</span>
-                                <span class="text-[10px] text-slate-400 font-bold uppercase">RA: ${m.ra_aluno}</span>
-                            </div>
-                        </div>
-                    </td>`;
+                let rowHTML = `<tr class="group transition-colors"><td class="px-8 py-5 font-bold text-fmm-dark sticky-col attendance-cell"><div class="flex items-center gap-4"><img src="${urlFoto}" class="student-photo" onclick="openPhotoModal('${urlFoto}', '${m.alunos?.nome_completo}')"><div class="flex flex-col"><span class="text-sm font-extrabold truncate max-w-[180px]">${m.alunos?.nome_completo || 'N/A'}</span><span class="text-[10px] text-slate-400 font-bold uppercase">RA: ${m.ra_aluno}</span></div></div></td>`;
 
                 if (tempos === 1) {
-                    rowHTML += `
-                        <td class="px-8 py-5 attendance-cell">
-                            <div class="flex items-center justify-center">
-                                <button onclick="togglePresence('${m.ra_aluno}', 1)" class="btn-presence ${p.tempo1 ? 'btn-present' : 'btn-absent'}">
-                                    <i data-lucide="${p.tempo1 ? 'check' : 'x'}" class="w-4 h-4"></i>
-                                    ${p.tempo1 ? 'Presente' : 'Ausente'}
-                                </button>
-                            </div>
-                        </td>`;
+                    rowHTML += `<td class="px-8 py-5 attendance-cell"><div class="flex items-center justify-center"><button onclick="togglePresence('${m.ra_aluno}', 1)" class="btn-presence ${p.tempo1 ? 'btn-present' : 'btn-absent'}"><i data-lucide="${p.tempo1 ? 'check' : 'x'}" class="w-4 h-4"></i>${p.tempo1 ? 'Presente' : 'Ausente'}</button></div></td>`;
                 } else {
-                    rowHTML += `
-                        <td class="px-8 py-5 attendance-cell">
-                            <div class="flex items-center justify-center">
-                                <button onclick="togglePresence('${m.ra_aluno}', 1)" class="btn-presence ${p.tempo1 ? 'btn-present' : 'btn-absent'}">
-                                    <i data-lucide="${p.tempo1 ? 'check' : 'x'}" class="w-4 h-4"></i>
-                                    ${p.tempo1 ? 'Tempo 1' : 'Ausente'}
-                                </button>
-                            </div>
-                        </td>
-                        <td class="px-8 py-5 attendance-cell">
-                            <div class="flex items-center justify-center">
-                                <button onclick="togglePresence('${m.ra_aluno}', 2)" class="btn-presence ${p.tempo2 ? 'btn-present' : 'btn-absent'}">
-                                    <i data-lucide="${p.tempo2 ? 'check' : 'x'}" class="w-4 h-4"></i>
-                                    ${p.tempo2 ? 'Tempo 2' : 'Ausente'}
-                                </button>
-                            </div>
-                        </td>`;
+                    rowHTML += `<td class="px-8 py-5 attendance-cell"><div class="flex items-center justify-center"><button onclick="togglePresence('${m.ra_aluno}', 1)" class="btn-presence ${p.tempo1 ? 'btn-present' : 'btn-absent'}"><i data-lucide="${p.tempo1 ? 'check' : 'x'}" class="w-4 h-4"></i>${p.tempo1 ? 'Tempo 1' : 'Ausente'}</button></div></td><td class="px-8 py-5 attendance-cell"><div class="flex items-center justify-center"><button onclick="togglePresence('${m.ra_aluno}', 2)" class="btn-presence ${p.tempo2 ? 'btn-present' : 'btn-absent'}"><i data-lucide="${p.tempo2 ? 'check' : 'x'}" class="w-4 h-4"></i>${p.tempo2 ? 'Tempo 2' : 'Ausente'}</button></div></td>`;
                 }
-                
                 return rowHTML + `</tr>`;
             }).join('');
             lucide.createIcons();
@@ -445,87 +319,39 @@
             const date = document.getElementById('selectDate').value;
             const tempos = parseInt(document.getElementById('selectTempos').value);
             const btn = document.getElementById('btnSave');
-            
-            btn.disabled = true;
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Gravando...';
+            btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Gravando...';
             lucide.createIcons();
 
             const records = [];
             Object.keys(localPresenceState).forEach(ra => {
-                records.push({
-                    ra_aluno: ra,
-                    sigla_disciplina: currentDiscSigla,
-                    id_turma: currentTurmaId,
-                    data_presenca: date,
-                    presente: localPresenceState[ra].tempo1,
-                    numero_tempo: 1
-                });
-                if(tempos === 2) {
-                    records.push({
-                        ra_aluno: ra,
-                        sigla_disciplina: currentDiscSigla,
-                        id_turma: currentTurmaId,
-                        data_presenca: date,
-                        presente: localPresenceState[ra].tempo2,
-                        numero_tempo: 2
-                    });
-                }
+                records.push({ ra_aluno: ra, sigla_disciplina: currentDiscSigla, id_turma: currentTurmaId, data_presenca: date, presente: localPresenceState[ra].tempo1, numero_tempo: 1 });
+                if(tempos === 2) records.push({ ra_aluno: ra, sigla_disciplina: currentDiscSigla, id_turma: currentTurmaId, data_presenca: date, presente: localPresenceState[ra].tempo2, numero_tempo: 2 });
             });
 
             try {
-                const { error } = await supabaseClient.from('frequencias').upsert(records, {
-                    onConflict: 'ra_aluno,sigla_disciplina,data_presenca,numero_tempo'
-                });
-
+                const { error } = await window.supabaseClient.from('frequencias').upsert(records, { onConflict: 'ra_aluno,sigla_disciplina,data_presenca,numero_tempo' });
                 if (error) throw error;
-                showToast("Frequência salva com sucesso!");
+                showToast("Frequência salva!");
                 loadAttendanceTable();
-            } catch (err) {
-                console.error(err);
-                alert("Erro ao salvar: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5"></i> Salvar Chamada';
-                lucide.createIcons();
-            }
+            } catch (err) { alert("Erro ao salvar: " + err.message); } 
+            finally { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-3.5 h-3.5"></i> Salvar Chamada'; lucide.createIcons(); }
         }
 
         async function deleteAttendance() {
             const date = document.getElementById('selectDate').value;
-            if(!confirm(`Tem certeza que deseja excluir TODOS os registros de presença do dia ${date} para esta disciplina?`)) return;
-
+            if(!confirm(`Excluir TODOS os registos do dia ${date}?`)) return;
             try {
-                const { error } = await supabaseClient.from('frequencias')
-                    .delete()
-                    .eq('id_turma', currentTurmaId)
-                    .eq('sigla_disciplina', currentDiscSigla)
-                    .eq('data_presenca', date);
-
+                const { error } = await window.supabaseClient.from('frequencias').delete().eq('id_turma', currentTurmaId).eq('sigla_disciplina', currentDiscSigla).eq('data_presenca', date);
                 if (error) throw error;
-                showToast("Registros removidos.");
+                showToast("Registos removidos.");
                 loadAttendanceTable();
-            } catch (err) {
-                alert(err.message);
-            }
+            } catch (err) { alert(err.message); }
         }
 
-        function openPhotoModal(url, name) {
-            const modal = document.getElementById('photoModal');
-            document.getElementById('enlargedPhoto').src = url;
-            document.getElementById('enlargedName').innerText = name;
-            modal.classList.remove('hidden');
-        }
-
+        function openPhotoModal(url, name) { document.getElementById('enlargedPhoto').src = url; document.getElementById('enlargedName').innerText = name; document.getElementById('photoModal').classList.remove('hidden'); }
         function closePhotoModal() { document.getElementById('photoModal').classList.add('hidden'); }
-
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = msg;
-            t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-20', 'translate-y-0');
-            setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-20'); }, 2500);
-        }
-
-        async function logout() { if(confirm("Deseja sair?")) { await supabaseClient.auth.signOut(); window.location.href = "../index.html"; } }
+        function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-20', 'translate-y-0'); setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-20'); }, 2500); }
+        async function logout() { if(confirm("Deseja sair?")) { await window.supabaseClient.auth.signOut(); window.location.href = "../index.html"; } }
         window.onload = init;
     </script>
 </body>
