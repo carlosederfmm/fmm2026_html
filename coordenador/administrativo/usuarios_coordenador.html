@@ -9,10 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Importação de Constantes e Cliente Global -->
     <script src="../../assets/js/constants.js"></script>
     <script src="../../assets/js/supabase_client.js"></script>
-    <!-- Importação do Componente de Sidebar -->
     <script src="../../sidebar.js"></script>
 
     <script>
@@ -100,7 +98,6 @@
         </div>
     </main>
 
-    <!-- MODAL DE CADASTRO / EDIÇÃO -->
     <div id="usuarioModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-fmm-dark/60 backdrop-blur-sm p-4">
         <div class="bg-white w-full max-w-xl rounded-[32px] shadow-2xl flex flex-col animate-fade-in-up overflow-hidden max-h-[90vh]">
             <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-white rounded-t-[32px]">
@@ -112,11 +109,10 @@
 
             <div class="modal-content overflow-y-auto p-8 space-y-6 max-h-[70vh] custom-scrollbar">
                 <div class="space-y-4">
-                    <!-- ALERTA DE CONVITE -->
                     <div class="p-4 bg-fmm-blue/5 border border-fmm-blue/10 rounded-2xl flex gap-4 items-start">
                         <i data-lucide="info" class="w-5 h-5 text-fmm-blue mt-0.5"></i>
                         <p class="text-[11px] text-slate-600 leading-relaxed font-medium">
-                            Ao cadastrar, o usuário receberá um e-mail institucional para confirmar sua conta e <span class="font-bold text-fmm-blue">definir sua própria senha de acesso</span>.
+                            O usuário poderá acessar o sistema com o e-mail e a senha definidos abaixo.
                         </p>
                     </div>
 
@@ -124,10 +120,17 @@
                         <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Nome Completo</label>
                         <input type="text" id="inNome" placeholder="Ex: Roberto Carlos Silva" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all font-medium">
                     </div>
+                    
                     <div class="space-y-1.5">
                         <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">E-mail Institucional</label>
                         <input type="email" id="inEmail" placeholder="usuario@fmm.org.br" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all">
                     </div>
+
+                    <div id="divPasswordContainer" class="space-y-1.5">
+                        <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Senha de Acesso</label>
+                        <input type="password" id="inPassword" placeholder="Mínimo 6 caracteres" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all">
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1.5">
                             <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">WhatsApp / Telefone</label>
@@ -136,8 +139,7 @@
                         <div class="space-y-1.5">
                             <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Cargo</label>
                             <select id="inCargo" onchange="toggleLevelSelector()" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all font-bold text-slate-600">
-                                <!-- Opções injetadas dinamicamente via DB_CONSTANTS -->
-                            </select>
+                                </select>
                         </div>
                     </div>
                     
@@ -253,8 +255,8 @@
             document.getElementById('modalTitle').innerText = "Novo Cadastro";
             document.getElementById('btnSave').innerText = "Finalizar Cadastro";
             document.getElementById('inEmail').disabled = false;
+            document.getElementById('divPasswordContainer').classList.remove('hidden');
             
-            // Limpar formulário
             document.querySelectorAll('#usuarioModal input').forEach(i => { if(i.type === 'checkbox') i.checked = false; else i.value = ''; });
             
             document.getElementById('usuarioModal').classList.remove('hidden');
@@ -271,6 +273,9 @@
             document.getElementById('inEmail').disabled = true; 
             document.getElementById('inPhone').value = user.telefone || '';
             document.getElementById('inCargo').value = user.cargo;
+            
+            document.getElementById('divPasswordContainer').classList.add('hidden');
+
             toggleLevelSelector();
             const checkboxes = document.querySelectorAll('input[name="accessLevel"]');
             checkboxes.forEach(cb => cb.checked = (user.niveis_acesso || []).includes(cb.value));
@@ -283,11 +288,18 @@
                   email = document.getElementById('inEmail').value, 
                   phone = document.getElementById('inPhone').value, 
                   cargo = document.getElementById('inCargo').value;
+            
+            const password = document.getElementById('inPassword').value;
 
             const levels = Array.from(document.querySelectorAll('input[name="accessLevel"]:checked')).map(cb => cb.value);
             const btn = document.getElementById('btnSave');
             
             if (!nome || !email) return alert("Preencha Nome e E-mail.");
+            
+            // Validação de senha para novos usuários
+            if (!editingId && (!password || password.length < 6)) {
+                return alert("A senha deve ter no mínimo 6 caracteres.");
+            }
             
             btn.disabled = true; 
             btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Processando...';
@@ -304,30 +316,29 @@
                     if (error) throw error;
                     alert("Perfil atualizado com sucesso!");
                 } else {
-                    /** * AJUSTE SPRINT 3: 
-                     * Como o administrador não define mais a senha (fluxo de convite via e-mail),
-                     * geramos uma senha aleatória temporária complexa apenas para criar o registro no Auth.
-                     * O usuário usará o link do e-mail ou "Esqueci minha senha" para entrar.
-                     */
-                    const tempPassword = Math.random().toString(36).slice(-10) + "!" + Math.random().toString(36).toUpperCase().slice(-4);
+                    // =================================================================
+                    // NOVA LÓGICA: IGUAL TELA DE PROFESSORES (CLIENT SIDE SIGNUP)
+                    // =================================================================
+                    // Usamos a função nativa do SDK.
+                    // Os dados extras (cargo, access_levels) vão no metadata.
+                    // O Trigger do banco (lidar_novo_usuario) pega isso e cria o perfil.
                     
-                    const { data: rpcRes, error: rpcError } = await window.supabaseClient.rpc('admin_create_user', { 
-                        p_email: email, 
-                        p_password: tempPassword, 
-                        p_full_name: nome, 
-                        p_role: cargo, 
-                        p_phone: phone 
+                    const { data, error } = await window.supabaseClient.auth.signUp({
+                        email: email,
+                        password: password,
+                        options: {
+                            data: {
+                                full_name: nome,
+                                role: cargo,
+                                phone: phone,
+                                access_levels: levels // O Trigger vai ler isso aqui!
+                            }
+                        }
                     });
 
-                    if (rpcError) throw rpcError;
-                    if (!rpcRes.success) throw new Error(rpcRes.message);
+                    if (error) throw error;
                     
-                    const newUserId = rpcRes.user_id;
-                    if (newUserId) {
-                        await window.supabaseClient.from('perfis').update({ niveis_acesso: levels }).eq('id', newUserId);
-                    }
-                    
-                    alert("Usuário cadastrado! Um convite foi enviado ao e-mail institucional.");
+                    alert("Usuário cadastrado com sucesso!");
                 }
                 closeModal(); fetchUsuarios();
             } catch (err) { 
@@ -339,10 +350,24 @@
             }
         }
 
-        function deleteUser(id) {
+        async function deleteUser(id) {
             if(!confirm("Remover este acesso permanentemente?")) return;
-            window.supabaseClient.from('perfis').delete().eq('id', id).then(({error}) => {
-                if(error) alert(error.message); else fetchUsuarios();
+            
+            const btn = event.currentTarget; 
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>';
+            btn.disabled = true;
+
+            // Mantemos a RPC de delete pois ela é a mais segura para limpar tudo de uma vez
+            window.supabaseClient.rpc('admin_delete_user', { user_id: id }).then(({error}) => {
+                if(error) {
+                    alert("Erro ao excluir: " + error.message);
+                    btn.innerHTML = '<i data-lucide="trash-2" class="w-4 h-4"></i>';
+                    btn.disabled = false;
+                    lucide.createIcons();
+                } else {
+                    alert("Usuário removido!");
+                    fetchUsuarios();
+                }
             });
         }
 
