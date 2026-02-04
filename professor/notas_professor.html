@@ -253,12 +253,38 @@
             if (document.getElementById('period-tabs')) document.getElementById('period-tabs').classList.toggle('hidden', currentDiscType !== 'BCC');
 
             try {
-                const { data: matriculas } = await window.supabaseClient.from('matriculas')
-                    .select('id, ra_aluno, alunos:ra_aluno(nome_completo, url_foto)')
+                // --- LÓGICA DE SUBTURMA (INGLÊS) ---
+                const { data: discInfo } = await window.supabaseClient.from('disciplinas').select('nome').eq('sigla', currentDiscSigla).maybeSingle();
+                const isIngles = currentDiscSigla === 'L.ING' || discInfo?.nome?.toUpperCase().includes('INGLÊS');
+
+                let matriculasQuery = window.supabaseClient.from('matriculas')
+                    .select('id, ra_aluno, alunos:ra_aluno(nome_completo, url_foto, id_subturma_ingles)')
                     .eq('id_turma', turmaId)
                     .eq('status', 'CURSANDO')
                     .eq('ano_letivo', 2026);
-                globalMatriculas = matriculas || [];
+
+                if (isIngles && currentUser.cargo === 'professor') {
+                    const { data: subturma } = await window.supabaseClient.from('subturmas')
+                        .select('id')
+                        .eq('id_turma_origem', turmaId)
+                        .eq('id_professor', currentUser.id)
+                        .maybeSingle();
+
+                    if (subturma) {
+                        matriculasQuery = matriculasQuery.eq('alunos.id_subturma_ingles', subturma.id);
+                    } else {
+                        globalMatriculas = [];
+                        renderTable();
+                        document.getElementById('table-wrapper').classList.remove('hidden');
+                        document.getElementById('loading-overlay').classList.add('hidden');
+                        return;
+                    }
+                }
+
+                const { data: matriculas } = await matriculasQuery;
+                
+                // --- CORREÇÃO DE SEGURANÇA: Filtrar matrículas que não possuem dados de aluno vinculados ---
+                globalMatriculas = (matriculas || []).filter(m => m.alunos !== null);
                 
                 if (currentDiscType === 'BCC') {
                     const { data: nb } = await window.supabaseClient.from('notas_basica').select('*').eq('sigla_disciplina', currentDiscSigla);
@@ -269,7 +295,13 @@
                     globalNotas = nt || [];
                 }
 
-                globalMatriculas.sort((a, b) => a.alunos.nome_completo.localeCompare(b.alunos.nome_completo));
+                // --- ORDENAÇÃO ROBUSTA: Verifica a existência do objeto antes de comparar ---
+                globalMatriculas.sort((a, b) => {
+                    const nomeA = a.alunos?.nome_completo || "";
+                    const nomeB = b.alunos?.nome_completo || "";
+                    return nomeA.localeCompare(nomeB);
+                });
+
                 const countEl = document.getElementById('student-count');
                 if(countEl) countEl.innerText = globalMatriculas.length.toString().padStart(2, '0');
 
@@ -311,6 +343,11 @@
             }
             header.innerHTML = headHTML;
 
+            if (globalMatriculas.length === 0) {
+                body.innerHTML = `<tr><td colspan="${currentView === 'anual' ? 8 : 6}" class="px-8 py-20 text-center text-slate-300 italic">Nenhum aluno encontrado neste grupo.</td></tr>`;
+                return;
+            }
+
             body.innerHTML = globalMatriculas.map(m => {
                 const n = globalNotas.find(x => x.id_matricula === m.id && x.periodo === currentView) || { p1: 0, p2: 0, rt: 0, nt: 0, alterado_pela_coordenacao: false };
                 const a = globalAnual.find(x => x.id_matricula === m.id) || { media_anual: 0, recup_final: 0, conselho_classe: 0, media_final: 0, alterado_pela_coordenacao: false };
@@ -347,6 +384,12 @@
 
         function renderTecnica(header, body) {
             header.innerHTML = `<tr><th class="px-8 py-6 sticky-intersect border-r border-white/5 min-w-[300px] text-white text-[10px] font-black uppercase tracking-widest">Aluno</th><th class="text-center py-6 sticky-header text-white text-[10px] font-black uppercase">P1</th><th class="text-center py-6 sticky-header text-white text-[10px] font-black uppercase">P2</th><th class="text-center py-6 sticky-header bg-slate-800 text-white text-[10px] font-black uppercase">M1</th><th class="text-center py-6 sticky-header text-white text-[10px] font-black uppercase">Rec. P.</th><th class="text-center py-6 sticky-header bg-slate-800 text-white text-[10px] font-black uppercase">Cons.</th><th class="text-center py-6 sticky-header bg-slate-700 text-white text-[10px] font-black uppercase">M2</th><th class="text-center py-6 sticky-header text-white text-[10px] font-black uppercase">Rec. F.</th><th class="text-center py-6 sticky-header bg-fmm-green text-white text-[10px] font-black uppercase tracking-widest">N.F.P</th></tr>`;
+            
+            if (globalMatriculas.length === 0) {
+                body.innerHTML = `<tr><td colspan="9" class="px-8 py-20 text-center text-slate-300 italic">Nenhum aluno encontrado neste grupo.</td></tr>`;
+                return;
+            }
+
             body.innerHTML = globalMatriculas.map(m => {
                 const n = globalNotas.find(x => x.id_matricula === m.id) || { p1: 0, p2: 0, media_1: 0, recup_parcial: 0, conselho_semestral: 0, media_2: 0, recup_final_semestral: 0, nota_final_periodo: 0, alterado_pela_coordenacao: false };
                 const formattedUrl = formatDriveUrl(m.alunos?.url_foto);

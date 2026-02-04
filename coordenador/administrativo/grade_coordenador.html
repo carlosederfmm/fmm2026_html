@@ -88,6 +88,9 @@
             transition: background 0.2s;
             cursor: pointer;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
         }
         .slot-cell:hover { background: #f0f9ff; }
         
@@ -119,7 +122,6 @@
             padding: 0.5rem;
             border-radius: 0.75rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -178,8 +180,8 @@
                     <option value="">Selecionar...</option>
                 </select>
                 
-                <button id="btnSaveGrade" onclick="saveFullGrade()" class="bg-fmm-blue hover:bg-fmm-dark text-white px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-fmm-blue/20">
-                    <i data-lucide="save" class="w-4 h-4"></i> Salvar Grade
+                <button onclick="handleSelectionChange()" class="p-2.5 bg-slate-100 text-slate-400 hover:text-fmm-blue rounded-xl transition-all" title="Recarregar dados">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                 </button>
             </div>
         </header>
@@ -210,16 +212,35 @@
             <div class="p-8 space-y-5">
                 <div class="space-y-1.5">
                     <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Disciplina</label>
-                    <select id="modalDisc" onchange="filterSecondaryOptions()" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue text-sm font-medium">
+                    <select id="modalDisc" onchange="handleModalDiscChange()" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue text-sm font-medium">
                         <option value="">Selecionar Disciplina...</option>
                     </select>
                 </div>
 
-                <div class="space-y-1.5">
+                <!-- CAMPO NORMAL -->
+                <div id="divStandard" class="space-y-1.5">
                     <label class="text-[11px] font-bold text-slate-400 uppercase ml-1" id="labelSecondary">Responsável</label>
                     <select id="modalSecondary" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue text-sm font-medium">
                         <option value="">Selecione primeiro a disciplina...</option>
                     </select>
+                </div>
+
+                <!-- CAMPO INGLÊS DIVIDIDO -->
+                <div id="divEnglish" class="hidden space-y-4 p-4 bg-fmm-blue/5 rounded-2xl border border-fmm-blue/10">
+                    <div class="flex items-center gap-2 mb-1">
+                        <i data-lucide="split" class="w-3.5 h-3.5 text-fmm-blue"></i>
+                        <span class="text-[10px] font-black text-fmm-blue uppercase tracking-widest">Subturmas Detectadas</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="space-y-1">
+                            <label id="lblSubA" class="text-[9px] font-bold text-slate-400 uppercase ml-1">Grupo A</label>
+                            <input type="text" id="readProfA" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-500" disabled>
+                        </div>
+                        <div class="space-y-1">
+                            <label id="lblSubB" class="text-[9px] font-bold text-slate-400 uppercase ml-1">Grupo B</label>
+                            <input type="text" id="readProfB" class="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-500" disabled>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="p-8 border-t bg-slate-50/50 rounded-b-[32px] flex justify-between items-center gap-3">
@@ -228,7 +249,7 @@
                 </button>
                 <div class="flex gap-3 ml-auto">
                     <button onclick="closeModal()" class="px-6 py-3 text-sm font-bold text-slate-500 hover:text-slate-700">Cancelar</button>
-                    <button onclick="confirmAssignment()" class="bg-fmm-lime text-fmm-dark font-bold text-sm px-8 py-3 rounded-2xl shadow-xl shadow-fmm-lime/20 hover:scale-105 active:scale-95 transition-all">
+                    <button id="btnConfirmAtomic" onclick="confirmAssignment()" class="bg-fmm-lime text-fmm-dark font-bold text-sm px-8 py-3 rounded-2xl shadow-xl shadow-fmm-lime/20 hover:scale-105 active:scale-95 transition-all">
                         Confirmar
                     </button>
                 </div>
@@ -268,12 +289,12 @@
     </div>
 
     <script>
-       
+        
 
         let currentMode = 'turma'; 
         let currentTargetCell = null, currentDay = null, currentPeriod = null;
         let localScheduleState = []; 
-        let listProfessores = [], listTurmas = [], listVinculos = [], listDisciplinasRegular = [];
+        let listProfessores = [], listTurmas = [], listVinculos = [], listDisciplinasRegular = [], listSubturmas = [];
         let userLevels = [];
         let finderCurrentData = []; // Cache do snapshot atual para o buscador
 
@@ -299,6 +320,9 @@
                 
                 const { data: vinculos } = await supabaseClient.from('professor_disciplinas').select('*');
                 listVinculos = vinculos || [];
+
+                const { data: subs } = await supabaseClient.from('subturmas').select('*');
+                listSubturmas = subs || [];
 
                 populateModalDisciplines();
                 updatePrincipalSelector();
@@ -339,6 +363,38 @@
                     select.appendChild(opt);
                 });
             }
+        }
+
+        function checkIsIngles(sigla, nome) {
+            const normalizedNome = nome ? nome.toUpperCase() : "";
+            return sigla === 'L.ING' || normalizedNome === 'LÍNGUA INGLESA' || normalizedNome.includes('INGLÊS');
+        }
+
+        function handleModalDiscChange() {
+            const sigla = document.getElementById('modalDisc').value;
+            const principalId = document.getElementById('selectPrincipal').value;
+            const disc = listDisciplinasRegular.find(d => d.sigla === sigla);
+            const isIngles = checkIsIngles(sigla, disc?.nome);
+
+            const divStd = document.getElementById('divStandard');
+            const divEng = document.getElementById('divEnglish');
+
+            if (currentMode === 'turma' && isIngles) {
+                const subs = listSubturmas.filter(s => s.id_turma_origem === principalId);
+                if (subs.length >= 2) {
+                    divStd.classList.add('hidden');
+                    divEng.classList.remove('hidden');
+                    document.getElementById('lblSubA').innerText = subs[0].nome;
+                    document.getElementById('lblSubB').innerText = subs[1].nome;
+                    document.getElementById('readProfA').value = listProfessores.find(p => p.id === subs[0].id_professor)?.nome_completo || "Sem Professor";
+                    document.getElementById('readProfB').value = listProfessores.find(p => p.id === subs[1].id_professor)?.nome_completo || "Sem Professor";
+                    lucide.createIcons();
+                    return;
+                }
+            }
+            divStd.classList.remove('hidden');
+            divEng.classList.add('hidden');
+            filterSecondaryOptions();
         }
 
         function filterSecondaryOptions() {
@@ -391,31 +447,54 @@
             const principalId = document.getElementById('selectPrincipal').value;
             clearGridUI(); localScheduleState = []; 
             if (!principalId) return;
-            let query = supabaseClient.from('grade_horaria').select('*, perfis(nome_completo), disciplinas(nome, cor, tipo, sigla), turmas(nome)');
+            let query = supabaseClient.from('grade_horaria').select('*, perfis(nome_completo), disciplinas(nome, cor, tipo, sigla), turmas(nome), subturmas(nome)');
             if (currentMode === 'turma') query = query.eq('id_turma', principalId);
             else query = query.eq('id_professor', principalId);
             const { data, error } = await query;
             if (error) return console.error(error);
-            localScheduleState = data.map(item => ({ id_turma: item.id_turma, dia_semana: item.dia_semana, numero_tempo: item.numero_tempo, sigla_disciplina: item.sigla_disciplina, id_professor: item.id_professor }));
+            
+            localScheduleState = data.map(item => ({ 
+                id_turma: item.id_turma, 
+                dia_semana: item.dia_semana, 
+                numero_tempo: item.numero_tempo, 
+                sigla_disciplina: item.sigla_disciplina, 
+                id_professor: item.id_professor,
+                id_subturma: item.id_subturma
+            }));
+
+            // Agrupar por célula para tratar aulas múltiplas (Inglês)
+            const grouped = {};
             data.forEach(item => {
-                const cell = document.getElementById(`${item.dia_semana}-${item.numero_tempo}`);
+                const key = `${item.dia_semana}-${item.numero_tempo}`;
+                if(!grouped[key]) grouped[key] = [];
+                grouped[key].push(item);
+            });
+
+            Object.keys(grouped).forEach(key => {
+                const cell = document.getElementById(key);
                 if (cell) {
-                    const d = item.disciplinas;
-                    const discDisplayName = d ? (d.tipo === 'BCC' ? d.nome : d.sigla) : item.sigla_disciplina;
-                    const title = currentMode === 'turma' ? discDisplayName : (item.turmas ? item.turmas.nome : 'Extra');
-                    const subtitle = currentMode === 'turma' ? (item.perfis ? item.perfis.nome_completo : 'N/A') : discDisplayName;
-                    updateCellUI(cell, title, subtitle, d?.cor || '#334155');
+                    grouped[key].forEach(item => {
+                        const d = item.disciplinas;
+                        const discDisplayName = d ? (d.tipo === 'BCC' ? d.nome : d.sigla) : item.sigla_disciplina;
+                        const subInfo = item.subturmas ? `[${item.subturmas.nome}] ` : "";
+                        const title = currentMode === 'turma' ? discDisplayName : (item.turmas ? item.turmas.nome : 'Extra');
+                        const subtitle = currentMode === 'turma' ? `${subInfo}${item.perfis ? item.perfis.nome_completo : 'N/A'}` : discDisplayName;
+                        updateCellUI(cell, title, subtitle, d?.cor || '#334155');
+                    });
                 }
             });
         }
 
         function updateCellUI(cell, line1, line2, cor) {
-            cell.innerHTML = `
-                <div class="class-card animate-fade-in-up" style="border-left-color: ${cor}; background-color: ${cor}10">
-                    <span class="text-[9px] font-black uppercase truncate leading-tight" style="color: ${cor}">${line1}</span>
-                    <span class="text-[8px] text-slate-400 font-bold truncate mt-0.5">${line2}</span>
-                </div>
+            const card = document.createElement('div');
+            card.className = "class-card animate-fade-in-up";
+            card.style.borderLeftColor = cor;
+            card.style.backgroundColor = cor + '10';
+            card.innerHTML = `
+                <span class="text-[9px] font-black uppercase truncate leading-tight" style="color: ${cor}">${line1}</span>
+                <span class="text-[8px] text-slate-400 font-bold truncate mt-0.5">${line2}</span>
             `;
+            cell.appendChild(card);
         }
 
         function clearGridUI() { document.querySelectorAll('.slot-cell').forEach(c => c.innerHTML = ''); }
@@ -424,11 +503,13 @@
             if (!document.getElementById('selectPrincipal').value) return alert("Selecione primeiro uma opção no topo.");
             currentTargetCell = cell; currentDay = day; currentPeriod = period;
             
-            const existing = localScheduleState.find(x => x.dia_semana === day && x.numero_tempo === period);
+            const existing = localScheduleState.filter(x => x.dia_semana === day && x.numero_tempo === period);
             const btnRemove = document.getElementById('btnRemoveAssignment');
 
             document.getElementById('modalDisc').value = '';
             document.getElementById('modalSecondary').innerHTML = '<option value="">Selecione a disciplina...</option>';
+            document.getElementById('divEnglish').classList.add('hidden');
+            document.getElementById('divStandard').classList.remove('hidden');
             
             if (currentMode === 'turma') {
                 document.getElementById('labelSecondary').innerText = "Professor Responsável";
@@ -441,10 +522,12 @@
                 document.getElementById('modalDisc').innerHTML = '<option value="">Selecionar Disciplina...</option>' + minhasDisciplinas.map(d => `<option value="${d.sigla}">${d.nome} (${d.sigla})</option>`).join('');
             }
             
-            if (existing) {
-                document.getElementById('modalDisc').value = existing.sigla_disciplina;
-                filterSecondaryOptions();
-                document.getElementById('modalSecondary').value = currentMode === 'turma' ? existing.id_professor : existing.id_turma;
+            if (existing.length > 0) {
+                document.getElementById('modalDisc').value = existing[0].sigla_disciplina;
+                handleModalDiscChange();
+                if (existing.length < 2) {
+                    document.getElementById('modalSecondary').value = currentMode === 'turma' ? existing[0].id_professor : existing[0].id_turma;
+                }
                 btnRemove.classList.remove('hidden');
             } else {
                 btnRemove.classList.add('hidden');
@@ -456,54 +539,109 @@
 
         function closeModal() { document.getElementById('assignModal').classList.add('hidden'); }
 
-        function confirmAssignment() {
+        // --- SALVAMENTO ATÔMICO PROTEGIDO ---
+        async function confirmAssignment() {
             const sigla = document.getElementById('modalDisc').value;
-            const secondaryId = document.getElementById('modalSecondary').value;
             const principalId = document.getElementById('selectPrincipal').value;
-            if (!sigla || !secondaryId) return alert("Preencha todos os campos.");
-            const disc = listDisciplinasRegular.find(d => d.sigla === sigla);
-            const discDisplayName = disc.tipo === 'BCC' ? disc.nome : disc.sigla;
-            let profId, turmaId, profName, turmaName;
-            if (currentMode === 'turma') {
-                turmaId = principalId; profId = secondaryId;
-                profName = listProfessores.find(p => p.id === profId)?.nome_completo;
-                updateCellUI(currentTargetCell, discDisplayName, profName, disc.cor);
-            } else {
-                profId = principalId; turmaId = secondaryId; 
-                turmaName = listTurmas.find(t => t.id === turmaId)?.nome;
-                updateCellUI(currentTargetCell, turmaName, discDisplayName, disc.cor);
+            if (!sigla) return alert("Selecione a disciplina.");
+
+            const btn = document.getElementById('btnConfirmAtomic');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            try {
+                // 1. LIMPEZA ATÔMICA: Remove apenas o que existia neste slot para esta turma/prof
+                let deleteQuery = supabaseClient.from('grade_horaria')
+                    .delete()
+                    .eq('dia_semana', currentDay)
+                    .eq('numero_tempo', currentPeriod);
+
+                if (currentMode === 'turma') deleteQuery = deleteQuery.eq('id_turma', principalId);
+                else deleteQuery = deleteQuery.eq('id_professor', principalId);
+
+                const { error: delError } = await deleteQuery;
+                if (delError) throw delError;
+
+                // 2. PREPARAÇÃO DO PAYLOAD
+                let payload = [];
+                const disc = listDisciplinasRegular.find(d => d.sigla === sigla);
+                const isIngles = checkIsIngles(sigla, disc?.nome);
+
+                if (currentMode === 'turma' && isIngles) {
+                    const subs = listSubturmas.filter(s => s.id_turma_origem === principalId);
+                    if (subs.length >= 2) {
+                        subs.forEach(s => {
+                            payload.push({ 
+                                id_turma: principalId, 
+                                dia_semana: currentDay, 
+                                numero_tempo: currentPeriod, 
+                                sigla_disciplina: sigla, 
+                                id_professor: s.id_professor,
+                                id_subturma: s.id
+                            });
+                        });
+                    } else {
+                        throw new Error("Subturmas não configuradas para esta turma.");
+                    }
+                } else {
+                    const secondaryId = document.getElementById('modalSecondary').value;
+                    if (!secondaryId) throw new Error("Selecione o responsável.");
+                    let profId, turmaId;
+                    if (currentMode === 'turma') { turmaId = principalId; profId = secondaryId; } 
+                    else { profId = principalId; turmaId = secondaryId; }
+                    payload.push({ id_turma: turmaId, dia_semana: currentDay, numero_tempo: currentPeriod, sigla_disciplina: sigla, id_professor: profId, id_subturma: null });
+                }
+
+                // 3. INSERÇÃO
+                const { error: insError } = await supabaseClient.from('grade_horaria').insert(payload);
+                if (insError) throw insError;
+
+                // 4. ATUALIZAÇÃO DA UI
+                await handleSelectionChange(); // Recarrega do banco para garantir consistência visual
+                closeModal();
+
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao salvar: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
             }
-            localScheduleState = localScheduleState.filter(x => !(x.dia_semana === currentDay && x.numero_tempo === currentPeriod));
-            localScheduleState.push({ id_turma: turmaId, dia_semana: currentDay, numero_tempo: currentPeriod, sigla_disciplina: sigla, id_professor: profId });
-            closeModal();
+        }
+
+        async function clearSlot() {
+            if (!confirm("Remover esta aula da grade?")) return;
+            const principalId = document.getElementById('selectPrincipal').value;
+            
+            try {
+                let deleteQuery = supabaseClient.from('grade_horaria')
+                    .delete()
+                    .eq('dia_semana', currentDay)
+                    .eq('numero_tempo', currentPeriod);
+
+                if (currentMode === 'turma') deleteQuery = deleteQuery.eq('id_turma', principalId);
+                else deleteQuery = deleteQuery.eq('id_professor', principalId);
+
+                const { error } = await deleteQuery;
+                if(error) throw error;
+                
+                await handleSelectionChange();
+                closeModal();
+            } catch (err) {
+                alert("Erro ao remover: " + err.message);
+            }
         }
 
         function confirmRemoval() {
-            if (confirm("Remover esta aula da grade?")) {
-                localScheduleState = localScheduleState.filter(x => !(x.dia_semana === currentDay && x.numero_tempo === currentPeriod));
-                currentTargetCell.innerHTML = '';
-                closeModal();
-            }
+            clearSlot();
         }
 
+        // Função mantida por compatibilidade mas desencorajada pelo uso atômico
         async function saveFullGrade() {
             const principalId = document.getElementById('selectPrincipal').value;
-            if(!principalId) return alert("Nada para salvar.");
-            const btn = document.getElementById('btnSaveGrade');
-            btn.disabled = true; btn.innerHTML = '<i data-lucide="loader-2" class="animate-spin"></i> Gravando...';
-            lucide.createIcons();
-            try {
-                let deleteQuery = supabaseClient.from('grade_horaria').delete();
-                if (currentMode === 'turma') deleteQuery = deleteQuery.eq('id_turma', principalId);
-                else deleteQuery = deleteQuery.eq('id_professor', principalId);
-                await deleteQuery;
-                if (localScheduleState.length > 0) {
-                    const { error } = await supabaseClient.from('grade_horaria').insert(localScheduleState);
-                    if (error) throw error;
-                }
-                alert("Grade salva com sucesso!");
-            } catch (err) { alert("Erro: " + err.message); }
-            finally { btn.disabled = false; btn.innerHTML = '<i data-lucide="save"></i> Salvar Grade'; lucide.createIcons(); }
+            if(!principalId) return alert("Selecione uma turma primeiro.");
+            alert("A grade é salva automaticamente a cada atribuição.");
         }
 
         // --- LÓGICA DO BUSCADOR DE PROFESSOR ---

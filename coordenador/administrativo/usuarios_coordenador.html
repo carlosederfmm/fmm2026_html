@@ -127,7 +127,7 @@
                     </div>
 
                     <div id="divPasswordContainer" class="space-y-1.5">
-                        <label class="text-[11px] font-bold text-slate-400 uppercase ml-1">Senha de Acesso</label>
+                        <label id="labelPassword" class="text-[11px] font-bold text-slate-400 uppercase ml-1">Senha de Acesso</label>
                         <input type="password" id="inPassword" placeholder="Mínimo 6 caracteres" class="w-full px-5 py-3 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-fmm-blue transition-all">
                     </div>
 
@@ -255,7 +255,8 @@
             document.getElementById('modalTitle').innerText = "Novo Cadastro";
             document.getElementById('btnSave').innerText = "Finalizar Cadastro";
             document.getElementById('inEmail').disabled = false;
-            document.getElementById('divPasswordContainer').classList.remove('hidden');
+            document.getElementById('labelPassword').innerText = "Senha de Acesso";
+            document.getElementById('inPassword').placeholder = "Mínimo 6 caracteres";
             
             document.querySelectorAll('#usuarioModal input').forEach(i => { if(i.type === 'checkbox') i.checked = false; else i.value = ''; });
             
@@ -274,7 +275,10 @@
             document.getElementById('inPhone').value = user.telefone || '';
             document.getElementById('inCargo').value = user.cargo;
             
-            document.getElementById('divPasswordContainer').classList.add('hidden');
+            // Ajuste visual para edição de senha (opcional)
+            document.getElementById('labelPassword').innerText = "Alterar Senha (Opcional)";
+            document.getElementById('inPassword').placeholder = "Deixe em branco para manter";
+            document.getElementById('inPassword').value = '';
 
             toggleLevelSelector();
             const checkboxes = document.querySelectorAll('input[name="accessLevel"]');
@@ -290,13 +294,12 @@
                   cargo = document.getElementById('inCargo').value;
             
             const password = document.getElementById('inPassword').value;
-
             const levels = Array.from(document.querySelectorAll('input[name="accessLevel"]:checked')).map(cb => cb.value);
             const btn = document.getElementById('btnSave');
             
             if (!nome || !email) return alert("Preencha Nome e E-mail.");
             
-            // Validação de senha para novos usuários
+            // Validação de senha apenas para novos usuários
             if (!editingId && (!password || password.length < 6)) {
                 return alert("A senha deve ter no mínimo 6 caracteres.");
             }
@@ -307,23 +310,30 @@
 
             try {
                 if (editingId) {
-                    const { error } = await window.supabaseClient.from('perfis').update({ 
+                    // 1. Atualizar dados do Perfil
+                    const { error: profileError } = await window.supabaseClient.from('perfis').update({ 
                         nome_completo: nome, 
                         telefone: phone, 
                         cargo: cargo, 
                         niveis_acesso: levels 
                     }).eq('id', editingId);
-                    if (error) throw error;
+                    
+                    if (profileError) throw profileError;
+
+                    // 2. Atualizar Senha (se preenchida)
+                    if (password && password.length >= 6) {
+                        const { error: passError } = await window.supabaseClient.rpc('admin_update_user_password', { 
+                            user_id: editingId, 
+                            new_password: password 
+                        });
+                        if (passError) throw passError;
+                    } else if (password && password.length < 6) {
+                        alert("Senha muito curta. Os demais dados foram salvos, mas a senha não foi alterada.");
+                    }
+
                     alert("Perfil atualizado com sucesso!");
                 } else {
-                    // =================================================================
-                    // NOVA LÓGICA: IGUAL TELA DE PROFESSORES (CLIENT SIDE SIGNUP)
-                    // =================================================================
-                    // Usamos a função nativa do SDK.
-                    // Os dados extras (cargo, access_levels) vão no metadata.
-                    // O Trigger do banco (lidar_novo_usuario) pega isso e cria o perfil.
-                    
-                    const { data, error } = await window.supabaseClient.auth.signUp({
+                    const { error } = await window.supabaseClient.auth.signUp({
                         email: email,
                         password: password,
                         options: {
@@ -331,13 +341,12 @@
                                 full_name: nome,
                                 role: cargo,
                                 phone: phone,
-                                access_levels: levels // O Trigger vai ler isso aqui!
+                                access_levels: levels
                             }
                         }
                     });
 
                     if (error) throw error;
-                    
                     alert("Usuário cadastrado com sucesso!");
                 }
                 closeModal(); fetchUsuarios();
@@ -357,7 +366,6 @@
             btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>';
             btn.disabled = true;
 
-            // Mantemos a RPC de delete pois ela é a mais segura para limpar tudo de uma vez
             window.supabaseClient.rpc('admin_delete_user', { user_id: id }).then(({error}) => {
                 if(error) {
                     alert("Erro ao excluir: " + error.message);
@@ -376,10 +384,6 @@
             editingId = null;
         }
 
-        function toggleSidebar() { if (window.SidebarComponent) SidebarComponent.toggleSidebar(); }
-        function toggleCategory(id) { if (window.SidebarComponent) SidebarComponent.toggleCategory(id); }
-        async function handleLogout() { if (confirm("Deseja sair?")) { await window.supabaseClient.auth.signOut(); window.location.href = "../../index.html"; } }
-        
         window.onload = init;
     </script>
 </body>

@@ -45,7 +45,7 @@
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; border: 3px solid #f1f5f9; }
 
         .tab-btn { padding: 10px 24px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 14px; transition: all 0.2s; color: #64748b; display: flex; align-items: center; gap: 8px; }
         .tab-btn.active { background: #003c5b; color: white; box-shadow: 0 4px 12px rgba(0, 60, 91, 0.2); }
@@ -100,7 +100,7 @@
             <div id="empty-view" class="h-full flex flex-col items-center justify-center p-20 text-center">
                 <div class="w-24 h-24 bg-white rounded-[32px] shadow-xl flex items-center justify-center mb-8 border border-slate-50"><i data-lucide="user-plus" class="w-10 h-10 text-slate-200"></i></div>
                 <h3 class="text-xl font-extrabold text-slate-400 tracking-tight">Conselho de Classe Individual</h3>
-                <p class="text-sm text-slate-300 italic mt-2">Pesquise um aluno para gerir dados detalhados.</p>
+                <p id="empty-msg" class="text-sm text-slate-300 italic mt-2">Pesquise um aluno para gerir dados detalhados.</p>
             </div>
 
             <div id="student-view" class="hidden p-8 space-y-8 animate-slide">
@@ -148,6 +148,27 @@
             </div>
         </div>
     </main>
+
+    <!-- MODAL FOTO -->
+    <div id="photoModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" onclick="closePhotoModal()">
+        <div class="relative animate-fade-in-up" onclick="event.stopPropagation()">
+            <button onclick="closePhotoModal()" class="absolute -top-12 -right-4 text-white hover:text-fmm-lime transition-colors">
+                <i data-lucide="x" class="w-8 h-8"></i>
+            </button>
+            <img id="enlargedPhoto" src="" class="max-w-[90vw] max-h-[80vh] rounded-[40px] shadow-2xl border-4 border-white/10 object-contain">
+            <div id="enlargedName" class="mt-4 text-center text-white font-bold text-lg tracking-tight"></div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-8 right-8 z-50 translate-y-20 opacity-0 transition-all duration-500">
+        <div class="bg-slate-900 text-white px-8 py-5 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/5">
+            <div class="w-8 h-8 bg-fmm-lime/20 rounded-full flex items-center justify-center" id="toast-icon-container">
+                <i data-lucide="check" class="w-4 h-4 text-fmm-lime" id="toast-icon"></i>
+            </div>
+            <span class="text-xs font-bold tracking-tight" id="toast-msg">Sincronizado</span>
+        </div>
+    </div>
 
     <script>
         // TASK 3.2.1: supabaseClient agora é global vindo de ../assets/js/supabase_client.js
@@ -198,30 +219,95 @@
         }
 
         async function loadStudent(ra) {
-            document.getElementById('searchResults').classList.add('hidden'); document.getElementById('studentSearch').value = '';
+            document.getElementById('searchResults').classList.add('hidden'); 
+            document.getElementById('studentSearch').value = '';
+            
+            // --- VALIDAÇÃO INICIAL DE CONTEXTO ---
+            if (!currentDiscSigla) {
+                alert("Por favor, selecione sua disciplina primeiro para validar o acesso ao aluno.");
+                return;
+            }
+
             const { data: student } = await window.supabaseClient.from('alunos').select('*, turmas(*)').eq('ra', ra).single();
             const { data: matricula } = await window.supabaseClient.from('matriculas').select('id').eq('ra_aluno', ra).eq('ano_letivo', 2026).maybeSingle();
+            
+            // --- LÓGICA DE SEGURANÇA E ACESSO (SUBTURMA OU TURMA REGULAR) ---
+            if (currentUser.cargo === 'professor') {
+                const s = document.getElementById('selectDisc');
+                const discName = s.options[s.selectedIndex]?.text || "";
+                const isIngles = currentDiscSigla === 'L.ING' || discName.toUpperCase().includes('INGLÊS');
+
+                if (isIngles) {
+                    // Verificação para Inglês (Subturmas)
+                    const { data: subturma } = await window.supabaseClient.from('subturmas')
+                        .select('id')
+                        .eq('id_turma_origem', student.id_turma)
+                        .eq('id_professor', currentUser.id)
+                        .maybeSingle();
+
+                    if (!subturma || student.id_subturma_ingles !== subturma.id) {
+                        return denyAccess("Este aluno pertence a outro grupo de Inglês.");
+                    }
+                } else {
+                    // Verificação para Disciplinas Regulares
+                    // O professor deve estar vinculado a esta disciplina E a esta turma do aluno
+                    const { data: vinculoRegular } = await window.supabaseClient.from('professor_disciplinas')
+                        .select('id')
+                        .eq('id_professor', currentUser.id)
+                        .eq('sigla_disciplina', currentDiscSigla)
+                        .eq('id_turma', student.id_turma)
+                        .maybeSingle();
+
+                    if (!vinculoRegular) {
+                        return denyAccess("Você não leciona nesta turma para a disciplina selecionada.");
+                    }
+                }
+            }
+
+            // Se chegou aqui, o acesso foi concedido
             selectedStudent = student; currentMatriculaId = matricula?.id || null;
-            document.getElementById('empty-view').classList.add('hidden'); document.getElementById('student-view').classList.remove('hidden');
+            document.getElementById('empty-view').classList.add('hidden'); 
+            document.getElementById('student-view').classList.remove('hidden');
+            document.getElementById('empty-msg').innerHTML = "Pesquise um aluno para gerir dados detalhados.";
             document.getElementById('studentName').innerText = student.nome_completo;
             document.getElementById('studentAvatar').src = formatDriveUrl(student.url_foto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.nome_completo)}&background=random&color=fff`;
             document.getElementById('studentInfo').innerText = `RA: ${student.ra} • ${student.turmas?.serie || 'Sem Série'}`;
             document.getElementById('studentEmail').innerText = student.email_institucional;
             document.getElementById('studentTurmaNome').innerText = student.turmas?.nome || 'Não Alocado';
             document.getElementById('studentStatus').innerText = student.status;
-            if (currentDiscSigla) loadContextData();
+            
+            loadContextData();
             lucide.createIcons();
         }
 
-        function handleContextChange() {
-            const s = document.getElementById('selectDisc'); currentDiscSigla = s.value; currentDiscType = s.options[s.selectedIndex]?.dataset.tipo;
-            document.getElementById('selected-disc-label').innerText = s.options[s.selectedIndex]?.text || "Selecione uma matéria";
-            if (selectedStudent && currentDiscSigla) loadContextData();
+        // Função auxiliar para negar acesso
+        function denyAccess(msg) {
+            selectedStudent = null;
+            currentMatriculaId = null;
+            document.getElementById('student-view').classList.add('hidden');
+            document.getElementById('empty-view').classList.remove('hidden');
+            document.getElementById('empty-msg').innerHTML = `<span class="text-red-500 font-bold">ACESSO NEGADO:</span> ${msg}`;
+            return false;
         }
 
-        async function loadContextData() { if (activeTab === 'frequencia') refreshFrequency(); else refreshGrades(); }
+        function handleContextChange() {
+            const s = document.getElementById('selectDisc'); 
+            currentDiscSigla = s.value; 
+            currentDiscType = s.options[s.selectedIndex]?.dataset.tipo;
+            document.getElementById('selected-disc-label').innerText = s.options[s.selectedIndex]?.text || "Selecione uma matéria";
+            
+            // Se já houver um aluno carregado, re-valida a permissão de visualização para o novo contexto de disciplina
+            if (selectedStudent) loadStudent(selectedStudent.ra);
+        }
+
+        async function loadContextData() { 
+            if (!selectedStudent || !currentDiscSigla) return;
+            if (activeTab === 'frequencia') refreshFrequency(); 
+            else refreshGrades(); 
+        }
 
         async function refreshFrequency() {
+            if (!selectedStudent || !currentDiscSigla) return;
             const { data: faltas } = await window.supabaseClient.from('frequencias').select('*').eq('ra_aluno', selectedStudent.ra).eq('sigla_disciplina', currentDiscSigla).eq('presente', false).order('data_presenca', { ascending: false });
             const { count } = await window.supabaseClient.from('frequencias').select('*', { count: 'exact', head: true }).eq('ra_aluno', selectedStudent.ra).eq('sigla_disciplina', currentDiscSigla).eq('presente', false);
             document.getElementById('total-faltas').innerText = `${count || 0} FALTAS`;
@@ -283,7 +369,8 @@
         function switchStudentTab(tab) { activeTab = tab; document.getElementById('tab-freq').classList.toggle('active', tab === 'frequencia'); document.getElementById('tab-notas').classList.toggle('active', tab === 'notas'); document.getElementById('content-frequencia').classList.toggle('hidden', tab !== 'frequencia'); document.getElementById('content-notas').classList.toggle('hidden', tab !== 'notas'); loadContextData(); }
         function toggleSidebar() { if(window.SidebarComponent) SidebarComponent.toggleSidebar(); }
         function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-20', 'translate-y-0'); setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-20'); }, 2500); }
-        async function logout() { if(confirm("Deseja sair?")) { await window.supabaseClient.auth.signOut(); window.location.href = "../index.html"; } }
+        function openPhotoZoom() { if(selectedStudent) { const url = formatDriveUrl(selectedStudent.url_foto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedStudent.nome_completo)}&background=random&color=fff`; document.getElementById('enlargedPhoto').src = url; document.getElementById('enlargedName').innerText = selectedStudent.nome_completo; document.getElementById('photoModal').classList.remove('hidden'); } }
+        function closePhotoModal() { document.getElementById('photoModal').classList.add('hidden'); }
         window.onload = init;
     </script>
 </body>

@@ -149,10 +149,11 @@
         // TASK 3.2.1: supabaseClient agora é global vindo de ../assets/js/supabase_client.js
 
         let currentUser = null, currentTurmaId = "", currentDiscSigla = "";
+        let currentSubturmaId = null; // Guardará o ID da subturma se for Inglês
         const EXTRA_NAMES = { 'CLUBE': 'Clubes Olímpicos', 'PLAN': 'Planejamento', 'APROF': 'Aprofundamento', 'FORM': 'Formação', 'REF': 'Reforço' };
 
         async function init() {
-            if(window.SidebarComponent) await window.SidebarComponent.render('sidebar-container');
+            if(window.SidebarComponent) await SidebarComponent.render('sidebar-container');
             const { data: { user } } = await window.supabaseClient.auth.getUser();
             if (!user) return window.location.href = '../index.html';
             const { data: profile } = await window.supabaseClient.from('perfis').select('*').eq('id', user.id).single();
@@ -183,15 +184,58 @@
 
         async function loadContentHistory() {
             currentTurmaId = document.getElementById('selectTurma').value;
-            currentDiscSigla = document.getElementById('selectDisc').value;
-            if (!currentTurmaId || !currentDiscSigla) { document.getElementById('content-list').classList.add('hidden'); document.getElementById('empty-view').classList.remove('hidden'); document.getElementById('btnAdd').classList.add('hidden'); return; }
-            document.getElementById('empty-view').classList.add('hidden'); document.getElementById('content-list').classList.add('hidden'); document.getElementById('loading-overlay').classList.remove('hidden'); document.getElementById('btnAdd').classList.remove('hidden');
+            currentDiscSigla = document.getElementById('selectDisc');
+            const discValue = currentDiscSigla.value;
+            const discName = currentDiscSigla.options[currentDiscSigla.selectedIndex]?.text || "";
+            currentDiscSigla = discValue;
+
+            if (!currentTurmaId || !currentDiscSigla) { 
+                document.getElementById('content-list').classList.add('hidden'); 
+                document.getElementById('empty-view').classList.remove('hidden'); 
+                document.getElementById('btnAdd').classList.add('hidden'); 
+                return; 
+            }
+
+            document.getElementById('empty-view').classList.add('hidden'); 
+            document.getElementById('content-list').classList.add('hidden'); 
+            document.getElementById('loading-overlay').classList.remove('hidden'); 
+            document.getElementById('btnAdd').classList.remove('hidden');
+
             try {
-                const { data, error } = await window.supabaseClient.from('conteudos_aula').select('*').eq('id_turma', currentTurmaId).eq('sigla_disciplina', currentDiscSigla).order('data_aula', { ascending: false });
+                // --- LÓGICA DE SUBTURMA (INGLÊS) ---
+                const isIngles = currentDiscSigla === 'L.ING' || discName.toUpperCase().includes('INGLÊS');
+                currentSubturmaId = null;
+
+                let query = window.supabaseClient.from('conteudos_aula').select('*')
+                    .eq('id_turma', currentTurmaId)
+                    .eq('sigla_disciplina', currentDiscSigla);
+
+                // Se for professor e for Inglês, ele só vê o conteúdo que ele mesmo lançou para o seu grupo
+                if (isIngles && currentUser.cargo === 'professor') {
+                    query = query.eq('id_professor', currentUser.id);
+                    
+                    // Opcional: Buscar ID da subturma para vincular no salvamento futuro
+                    const { data: sub } = await window.supabaseClient.from('subturmas')
+                        .select('id')
+                        .eq('id_turma_origem', currentTurmaId)
+                        .eq('id_professor', currentUser.id)
+                        .maybeSingle();
+                    if (sub) currentSubturmaId = sub.id;
+                } else if (currentUser.cargo === 'professor') {
+                    // Para matérias normais, o professor também só vê o seu próprio diário (segurança extra)
+                    query = query.eq('id_professor', currentUser.id);
+                }
+
+                const { data, error } = await query.order('data_aula', { ascending: false });
                 if (error) throw error;
                 renderTimeline(data || []);
-            } catch (err) { console.error(err); } 
-            finally { document.getElementById('loading-overlay').classList.add('hidden'); document.getElementById('content-list').classList.remove('hidden'); }
+            } catch (err) { 
+                console.error(err); 
+                alert("Erro ao carregar histórico.");
+            } finally { 
+                document.getElementById('loading-overlay').classList.add('hidden'); 
+                document.getElementById('content-list').classList.remove('hidden'); 
+            }
         }
 
         function renderTimeline(records) {
@@ -213,17 +257,42 @@
         }
 
         function closeRecordModal() { document.getElementById('recordModal').classList.add('hidden'); }
+        
         async function saveRecord() {
             const id = document.getElementById('recordId').value, data_aula = document.getElementById('recDate').value, numero_tempos = document.getElementById('recTempos').value, conteudo = document.getElementById('recContent').value, obs = document.getElementById('recObs').value;
             if (!data_aula || !conteudo) return alert("Preencha data e conteúdo.");
-            const payload = { id_turma: currentTurmaId, sigla_disciplina: currentDiscSigla, id_professor: currentUser.id, data_aula, numero_tempos, conteudo, observacoes: obs };
+            
+            const payload = { 
+                id_turma: currentTurmaId, 
+                sigla_disciplina: currentDiscSigla, 
+                id_professor: currentUser.id, 
+                data_aula, 
+                numero_tempos, 
+                conteudo, 
+                observacoes: obs,
+                id_subturma: currentSubturmaId // Vínculo com a subturma se houver
+            };
+            
             const btn = document.getElementById('btnSave'); btn.disabled = true; btn.innerText = "Salvando...";
             try {
-                let error; if (id) ({ error } = await window.supabaseClient.from('conteudos_aula').update(payload).eq('id', id)); else ({ error } = await window.supabaseClient.from('conteudos_aula').insert(payload));
+                let error; 
+                if (id) {
+                    ({ error } = await window.supabaseClient.from('conteudos_aula').update(payload).eq('id', id)); 
+                } else {
+                    ({ error } = await window.supabaseClient.from('conteudos_aula').insert(payload));
+                }
+                
                 if (error) throw error;
-                showToast("Conteúdo salvo!"); closeRecordModal(); loadContentHistory();
-            } catch (err) { alert("Erro ao salvar: " + err.message); } 
-            finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Salvar`; lucide.createIcons(); }
+                showToast("Conteúdo salvo!"); 
+                closeRecordModal(); 
+                loadContentHistory();
+            } catch (err) { 
+                alert("Erro ao salvar: " + err.message); 
+            } finally { 
+                btn.disabled = false; 
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Salvar`; 
+                lucide.createIcons(); 
+            }
         }
 
         async function deleteRecord() { const id = document.getElementById('recordId').value; if (!id || !confirm("Apagar este registo?")) return; const { error } = await window.supabaseClient.from('conteudos_aula').delete().eq('id', id); if (error) return alert(error.message); showToast("Registo removido"); closeRecordModal(); loadContentHistory(); }

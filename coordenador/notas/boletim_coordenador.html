@@ -116,7 +116,7 @@
         <!-- Conteúdo do Aluno (Hidden por padrão) -->
         <div id="boletimContent" class="hidden flex-1 flex flex-col overflow-hidden animate-ui">
             
-            <!-- Header do Aluno Refinado -->
+            <!-- Header do Aluno -->
             <header class="bg-white px-10 py-6 border-b border-slate-200 shadow-sm relative overflow-hidden flex-shrink-0">
                 <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-fmm-dark via-fmm-blue to-fmm-green"></div>
                 
@@ -141,26 +141,16 @@
 
                     <div class="flex items-center gap-8">
                         <div class="text-right">
-                            <p class="text-[9px] text-slate-400 uppercase font-black tracking-[0.2em] mb-1">Média Global (BCC)</p>
+                            <p class="text-[9px] text-slate-400 uppercase font-black tracking-[0.2em] mb-1">Média Global</p>
                             <p id="globalAverage" class="text-4xl font-black text-slate-700 leading-none">0.0</p>
                         </div>
                     </div>
                 </div>
             </header>
 
-            <!-- Abas de Período -->
+            <!-- Abas de Período (Dinâmicas) -->
             <nav id="viewControls" class="bg-white border-b border-slate-200 px-10 flex gap-2 overflow-x-auto no-scrollbar flex-shrink-0">
-                <button onclick="switchView('anual')" id="tab-anual" class="tab-btn active">Anual</button>
-                <button onclick="switchView('1_TRIMESTRE')" id="tab-1_TRIMESTRE" class="tab-btn">1º Trimestre</button>
-                <button onclick="switchView('2_TRIMESTRE')" id="tab-2_TRIMESTRE" class="tab-btn">2º Trimestre</button>
-                <button onclick="switchView('3_TRIMESTRE')" id="tab-3_TRIMESTRE" class="tab-btn">3º Trimestre</button>
-                <div class="w-px bg-slate-100 h-6 self-center mx-2"></div>
-                <button onclick="switchView('1_SEMESTRE_TEC')" id="tab-1_SEMESTRE_TEC" class="tab-btn flex items-center gap-2">
-                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i> 1º Semestre Técnico
-                </button>
-                <button onclick="switchView('2_SEMESTRE_TEC')" id="tab-2_SEMESTRE_TEC" class="tab-btn flex items-center gap-2">
-                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i> 2º Semestre Técnico
-                </button>
+                <!-- Injetado via JS dependendo do nível -->
             </nav>
 
             <!-- Área da Grade -->
@@ -182,7 +172,6 @@
                     </table>
                 </div>
 
-                <!-- Dica Pedagógica -->
                 <div class="mt-8 flex justify-center">
                     <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] flex items-center gap-2">
                         <i data-lucide="info" class="w-3 h-3"></i> Clique nos campos permitidos para alterar administrativamente
@@ -204,8 +193,8 @@
 
     <script>
         /**
-         * ENGINE DO BOLETIM INDIVIDUAL (RECONSTRUTOR 2026)
-         * Adaptado para o fluxo de coordenador com suporte a BCC e Técnico.
+         * ENGINE DO BOLETIM INDIVIDUAL - COORDENAÇÃO
+         * Suporta: Fundamental (Bimestral), Médio BCC (Trimestral) e Técnico (Semestral)
          */
         
         let allStudents = [];
@@ -214,13 +203,6 @@
         let currentStudent = null;
         let currentView = 'anual';
         let saveTimers = {};
-
-        // Currículo Técnico (Conforme Manual 2025/2026)
-        const TECH_CURRICULUM = {
-            '1ª Série': { 1: ['AMC', 'CEI', 'PC', 'TM'], 2: ['CE', 'M3DMA', 'PMF', 'POO', 'DP'] },
-            '2ª Série': { 1: ['AI-I', 'DW-I', 'ILR', 'LBD', 'PM'], 2: ['DW-II', 'PDM-I', 'LPR', 'IPF', 'DSE-I'] },
-            '3ª Série': { 1: ['AI-II', 'DJ', 'DSE-II', 'PDM-II', 'PFI', 'PFM', 'SHP'], 2: ['GPP', 'GPS', 'IOT E NT', 'ONST', 'PCPS', 'TS', 'VC'] }
-        };
 
         const HIDDEN_SUBJECTS = ['ATUAL', 'BIO.APL', 'FÍSICA.APL', 'GEO.APL', 'HIST.APL', 'L.ING', 'P.DESP', 'QUIM.APL'];
 
@@ -243,7 +225,6 @@
         }
 
         async function loadInitialMetadata() {
-            // 1. Carregar Turmas para o Filtro
             const { data: turmas } = await window.supabaseClient.from('turmas').select('*').order('nome');
             const select = document.getElementById('classFilter');
             if (turmas) {
@@ -256,7 +237,6 @@
                 });
             }
 
-            // 2. Carregar Disciplinas
             const { data: disc } = await window.supabaseClient.from('disciplinas').select('*').order('nome');
             const visible = disc ? disc.filter(d => !HIDDEN_SUBJECTS.includes(d.sigla)) : [];
             basicSubjects = visible.filter(d => d.tipo === 'BCC');
@@ -267,7 +247,6 @@
 
         async function fetchStudents() {
             const classId = document.getElementById('classFilter').value;
-            const container = document.getElementById('studentList');
             
             let query = window.supabaseClient.from('matriculas')
                 .select('id, ra_aluno, turmas(nome, serie, nivel), alunos(ra, nome_completo, url_foto, email_institucional, status)')
@@ -315,7 +294,6 @@
         }
 
         async function selectStudent(ra) {
-            // UI Update
             document.querySelectorAll('.student-item').forEach(el => el.classList.remove('active'));
             document.getElementById(`item-${ra}`)?.classList.add('active');
             document.getElementById('emptyState').classList.add('hidden');
@@ -324,32 +302,75 @@
             const student = allStudents.find(s => s.ra === ra);
             currentStudent = student;
 
-            // Header Update
             document.getElementById('headerName').innerText = student.name;
             document.getElementById('headerRA').innerText = `RA: ${student.ra}`;
             document.getElementById('headerClass').innerText = `${student.className} • ${student.serie}`;
             document.getElementById('headerAvatar').src = student.avatar;
             document.getElementById('headerStatus').innerText = student.status;
 
+            // Reinicia a visão para 'anual' ao trocar de aluno para evitar bugs de abas inexistentes
+            currentView = 'anual';
+            updateTabControls();
+
             await loadGrades(student.id);
             renderTable();
             calculateGlobalAverage();
         }
 
-        async function loadGrades(matId) {
-            const [{ data: nbT }, { data: nbA }, { data: ntT }] = await Promise.all([
-                window.supabaseClient.from('notas_basica').select('*').eq('id_matricula', matId),
-                window.supabaseClient.from('anual_basica').select('*').eq('id_matricula', matId),
-                window.supabaseClient.from('notas_tecnica').select('*').eq('id_matricula', matId)
-            ]);
+        function updateTabControls() {
+            const nav = document.getElementById('viewControls');
+            const isFundamental = currentStudent.nivel === 'EF1' || currentStudent.nivel === 'EF2';
+            
+            let tabs = [];
+            if (isFundamental) {
+                tabs = window.DB_CONSTANTS.PERIODS.FUNDAMENTAL;
+            } else {
+                tabs = [
+                    ...window.DB_CONSTANTS.PERIODS.MEDIO_BCC,
+                    { isSeparator: true },
+                    ...window.DB_CONSTANTS.PERIODS.MEDIO_TEC.map(t => ({...t, isTec: true}))
+                ];
+            }
 
+            nav.innerHTML = tabs.map(t => {
+                if (t.isSeparator) return `<div class="w-px bg-slate-100 h-6 self-center mx-2"></div>`;
+                
+                const id = t.isTec ? `${t.id}_TEC` : t.id;
+                const activeClass = currentView === id ? 'active' : '';
+                const icon = t.isTec ? `<i data-lucide="cpu" class="w-3.5 h-3.5"></i> ` : '';
+                
+                return `<button onclick="switchView('${id}')" id="tab-${id}" class="tab-btn ${activeClass} flex items-center gap-2">${icon}${t.label}</button>`;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        async function loadGrades(matId) {
+            const isFundamental = currentStudent.nivel === 'EF1' || currentStudent.nivel === 'EF2';
+            
+            let promises = [];
+            if (isFundamental) {
+                promises = [
+                    window.supabaseClient.from('notas_fundamental').select('*').eq('id_matricula', matId),
+                    window.supabaseClient.from('anual_fundamental').select('*').eq('id_matricula', matId),
+                    Promise.resolve({ data: [] }) // Dummy para TEC
+                ];
+            } else {
+                promises = [
+                    window.supabaseClient.from('notas_basica').select('*').eq('id_matricula', matId),
+                    window.supabaseClient.from('anual_basica').select('*').eq('id_matricula', matId),
+                    window.supabaseClient.from('notas_tecnica').select('*').eq('id_matricula', matId)
+                ];
+            }
+
+            const [{ data: nbT }, { data: nbA }, { data: ntT }] = await Promise.all(promises);
             currentStudent.grades = { BCC: nbT || [], ANUAL: nbA || [], TEC: ntT || [] };
         }
 
         function switchView(view) {
             currentView = view;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`tab-${view}`).classList.add('active');
+            document.getElementById(`tab-${view}`)?.classList.add('active');
             renderTable();
         }
 
@@ -357,78 +378,14 @@
             if (!currentStudent) return;
             const thead = document.getElementById('tableHead');
             const tbody = document.getElementById('gradesTableBody');
+            const isFundamental = currentStudent.nivel === 'EF1' || currentStudent.nivel === 'EF2';
             const isTec = currentView.includes('TEC');
 
             tbody.innerHTML = '';
             thead.innerHTML = '';
 
-            if (!isTec) {
-                // RENDERIZAÇÃO BÁSICA (BCC)
-                if (currentView === 'anual') {
-                    thead.innerHTML = `
-                        <tr>
-                            <th class="p-5 border-r border-white/5 rounded-tl-3xl">Disciplina</th>
-                            <th class="p-3 text-center border-r border-white/5">T1</th>
-                            <th class="p-3 text-center border-r border-white/5">T2</th>
-                            <th class="p-3 text-center border-r border-white/5">T3</th>
-                            <th class="p-3 text-center bg-fmm-blue/20 text-fmm-blue">Média</th>
-                            <th class="p-3 text-center bg-orange-600/20 text-orange-500">Rec. F</th>
-                            <th class="p-3 text-center bg-fmm-blue/20 text-fmm-blue border-r border-white/10">Cons.</th>
-                            <th class="p-3 text-center bg-fmm-blue text-white font-black text-xs">M. FINAL</th>
-                        </tr>`;
-
-                    basicSubjects.forEach(sub => {
-                        if (sub.series && !sub.series.includes(currentStudent.serie)) return;
-                        
-                        const t1 = currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo === '1_TRIMESTRE')?.nt || 0;
-                        const t2 = currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo === '2_TRIMESTRE')?.nt || 0;
-                        const t3 = currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo === '3_TRIMESTRE')?.nt || 0;
-                        const an = currentStudent.grades.ANUAL.find(x => x.sigla_disciplina === sub.sigla) || { media_anual: 0, recup_final: 0, conselho_classe: 0, media_final: 0 };
-                        
-                        const tr = document.createElement('tr');
-                        tr.className = "hover:bg-slate-50 transition-colors";
-                        tr.innerHTML = `
-                            <td class="p-5 font-black text-fmm-dark text-xs">${sub.nome}</td>
-                            <td class="p-3 text-center font-bold text-slate-500">${t1.toFixed(1)}</td>
-                            <td class="p-3 text-center font-bold text-slate-500">${t2.toFixed(1)}</td>
-                            <td class="p-3 text-center font-bold text-slate-500">${t3.toFixed(1)}</td>
-                            <td class="p-3 text-center font-black bg-blue-50/50">${an.media_anual.toFixed(1)}</td>
-                            <td class="p-3 text-center">${renderInput(sub.sigla, 'recup_final', an.recup_final, 'ANUAL')}</td>
-                            <td class="p-3 text-center border-r">${renderInput(sub.sigla, 'conselho_classe', an.conselho_classe, 'ANUAL')}</td>
-                            <td class="p-3 text-center bg-fmm-blue/5 font-black text-base ${an.media_final < 6 ? 'text-red-600' : 'text-fmm-blue'}">${an.media_final.toFixed(1)}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                } else {
-                    // Visão Trimestral (P1, P2, RT)
-                    thead.innerHTML = `
-                        <tr>
-                            <th class="p-5 border-r border-white/5 rounded-tl-3xl">Disciplina</th>
-                            <th class="p-3 text-center border-r border-white/5">Prova 1 (P1)</th>
-                            <th class="p-3 text-center border-r border-white/5">Prova 2 (P2)</th>
-                            <th class="p-3 text-center bg-slate-800/20">M. Parcial</th>
-                            <th class="p-3 text-center bg-orange-600/20 text-orange-500 border-r border-white/5">Recup. RT</th>
-                            <th class="p-3 text-center bg-fmm-blue text-white rounded-tr-3xl">Nota Trimestral</th>
-                        </tr>`;
-
-                    basicSubjects.forEach(sub => {
-                        if (sub.series && !sub.series.includes(currentStudent.serie)) return;
-                        const g = currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo === currentView) || { p1: 0, p2: 0, rt: 0, nt: 0 };
-                        const tr = document.createElement('tr');
-                        const mp = (g.p1 + g.p2) / 2;
-                        tr.innerHTML = `
-                            <td class="p-5 font-black text-fmm-dark text-xs">${sub.nome}</td>
-                            <td class="p-3 text-center">${renderInput(sub.sigla, 'p1', g.p1, 'BCC')}</td>
-                            <td class="p-3 text-center">${renderInput(sub.sigla, 'p2', g.p2, 'BCC')}</td>
-                            <td class="p-3 text-center font-bold text-slate-400 bg-slate-50">${mp.toFixed(1)}</td>
-                            <td class="p-3 text-center border-r">${renderInput(sub.sigla, 'rt', g.rt, 'BCC')}</td>
-                            <td class="p-3 text-center font-black text-base ${g.nt < 6 ? 'text-red-600' : 'text-fmm-blue'}">${g.nt.toFixed(1)}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }
-            } else {
-                // RENDERIZAÇÃO TÉCNICA
+            if (isTec) {
+                // RENDERIZAÇÃO TÉCNICA (S1 ou S2)
                 thead.innerHTML = `
                     <tr>
                         <th class="p-5 border-r border-white/5 rounded-tl-3xl">Componente Técnico</th>
@@ -441,23 +398,103 @@
                         <th class="p-3 text-center bg-fmm-green text-white rounded-tr-3xl">NOTA SEMESTRAL</th>
                     </tr>`;
 
-                const semestreNum = currentView === '1_SEMESTRE_TEC' ? 1 : 2;
+                const semesterLabel = currentView === '1_SEMESTRE_TEC' ? '1º Semestre' : '2º Semestre';
                 const dbPeriodo = currentView === '1_SEMESTRE_TEC' ? '1_SEMESTRE' : '2_SEMESTRE';
-                const curriculo = TECH_CURRICULUM[currentStudent.serie] || { 1: [], 2: [] };
-                const validSiglas = curriculo[semestreNum] || [];
 
-                techSubjects.filter(s => validSiglas.includes(s.sigla)).forEach(sub => {
+                techSubjects.filter(sub => {
+                    const matchSerie = sub.series && sub.series.includes(currentStudent.serie);
+                    const matchSemestre = sub.semestre === semesterLabel;
+                    return matchSerie && matchSemestre;
+                }).forEach(sub => {
                     const g = currentStudent.grades.TEC.find(x => x.sigla_disciplina === sub.sigla && x.periodo === dbPeriodo) || { p1: 0, p2: 0, media_1: 0, recup_parcial: 0, conselho_semestral: 0, media_2: 0, recup_final_semestral: 0, nota_final_periodo: 0 };
                     const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
                     tr.innerHTML = `
                         <td class="p-5 font-black text-fmm-dark text-xs">${sub.nome}</td>
                         <td class="p-3 text-center">${renderInput(sub.sigla, 'p1', g.p1, 'TEC')}</td>
                         <td class="p-3 text-center">${renderInput(sub.sigla, 'p2', g.p2, 'TEC')}</td>
-                        <td class="p-3 text-center font-bold text-slate-400 bg-slate-50">${g.media_1.toFixed(1)}</td>
+                        <td class="p-3 text-center font-bold text-slate-400 bg-slate-50">${Number(g.media_1).toFixed(1)}</td>
                         <td class="p-3 text-center">${renderInput(sub.sigla, 'recup_parcial', g.recup_parcial, 'TEC')}</td>
                         <td class="p-3 text-center">${renderInput(sub.sigla, 'conselho_semestral', g.conselho_semestral, 'TEC')}</td>
                         <td class="p-3 text-center border-r">${renderInput(sub.sigla, 'recup_final_semestral', g.recup_final_semestral, 'TEC')}</td>
-                        <td class="p-3 text-center font-black text-base ${g.nota_final_periodo < 6 ? 'text-red-600' : 'text-fmm-green'}">${g.nota_final_periodo.toFixed(1)}</td>
+                        <td class="p-3 text-center font-black text-base ${g.nota_final_periodo < 6 ? 'text-red-600' : 'text-fmm-green'}">${Number(g.nota_final_periodo).toFixed(1)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else if (currentView === 'anual') {
+                // RENDERIZAÇÃO ANUAL (FUNDAMENTAL OU MÉDIO)
+                const headers = isFundamental 
+                    ? ['B1', 'B2', 'B3', 'B4'] 
+                    : ['T1', 'T2', 'T3'];
+                
+                thead.innerHTML = `
+                    <tr>
+                        <th class="p-5 border-r border-white/5 rounded-tl-3xl">Disciplina</th>
+                        ${headers.map(h => `<th class="p-3 text-center border-r border-white/5">${h}</th>`).join('')}
+                        <th class="p-3 text-center bg-fmm-blue/20 text-fmm-blue">Média</th>
+                        <th class="p-3 text-center bg-orange-600/20 text-orange-500">Rec. F</th>
+                        <th class="p-3 text-center bg-fmm-blue/20 text-fmm-blue border-r border-white/10">Cons.</th>
+                        <th class="p-3 text-center bg-fmm-blue text-white font-black text-xs">M. FINAL</th>
+                    </tr>`;
+
+                basicSubjects.forEach(sub => {
+                    if (sub.series && !sub.series.includes(currentStudent.serie)) return;
+                    
+                    const p1 = currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo.startsWith('1'))?.[isFundamental ? 'nb' : 'nt'] || 0;
+                    const p2 = currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo.startsWith('2'))?.[isFundamental ? 'nb' : 'nt'] || 0;
+                    const p3 = currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo.startsWith('3'))?.[isFundamental ? 'nb' : 'nt'] || 0;
+                    const p4 = isFundamental ? (currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo.startsWith('4'))?.nb || 0) : null;
+                    
+                    const an = currentStudent.grades.ANUAL.find(x => x.sigla_disciplina === sub.sigla) || { media_anual: 0, recup_final: 0, conselho_classe: 0, media_final: 0 };
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="p-5 font-black text-fmm-dark text-xs">${sub.nome}</td>
+                        <td class="p-3 text-center font-bold text-slate-500">${Number(p1).toFixed(1)}</td>
+                        <td class="p-3 text-center font-bold text-slate-500">${Number(p2).toFixed(1)}</td>
+                        <td class="p-3 text-center font-bold text-slate-500">${Number(p3).toFixed(1)}</td>
+                        ${isFundamental ? `<td class="p-3 text-center font-bold text-slate-500">${Number(p4).toFixed(1)}</td>` : ''}
+                        <td class="p-3 text-center font-black bg-blue-50/50">${Number(an.media_anual).toFixed(1)}</td>
+                        <td class="p-3 text-center">${renderInput(sub.sigla, 'recup_final', an.recup_final, 'ANUAL')}</td>
+                        <td class="p-3 text-center border-r">${renderInput(sub.sigla, 'conselho_classe', an.conselho_classe, 'ANUAL')}</td>
+                        <td class="p-3 text-center bg-fmm-blue/5 font-black text-base ${an.media_final < 6 ? 'text-red-600' : 'text-fmm-blue'}">${Number(an.media_final).toFixed(1)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } else {
+                // RENDERIZAÇÃO PERIÓDICA (TRIMESTRE OU BIMESTRE)
+                const recLabel = isFundamental ? 'Recup. RB' : 'Recup. RT';
+                const totalLabel = isFundamental ? 'Nota Bimestral' : 'Nota Trimestral';
+                
+                thead.innerHTML = `
+                    <tr>
+                        <th class="p-5 border-r border-white/5 rounded-tl-3xl">Disciplina</th>
+                        <th class="p-3 text-center border-r border-white/5">Prova 1 (P1)</th>
+                        <th class="p-3 text-center border-r border-white/5">Prova 2 (P2)</th>
+                        <th class="p-3 text-center bg-slate-800/20">M. Parcial</th>
+                        <th class="p-3 text-center bg-orange-600/20 text-orange-500 border-r border-white/5">${recLabel}</th>
+                        <th class="p-3 text-center bg-fmm-blue text-white rounded-tr-3xl">${totalLabel}</th>
+                    </tr>`;
+
+                basicSubjects.forEach(sub => {
+                    if (sub.series && !sub.series.includes(currentStudent.serie)) return;
+                    const g = currentStudent.grades.BCC.find(x => x.sigla_disciplina === sub.sigla && x.periodo === currentView) || { p1: 0, p2: 0, rt: 0, rb: 0, nt: 0, nb: 0 };
+                    
+                    const tr = document.createElement('tr');
+                    const mp = (Number(g.p1 || 0) + Number(g.p2 || 0)) / 2;
+                    const recVal = isFundamental ? g.rb : g.rt;
+                    const totalVal = isFundamental ? g.nb : g.nt;
+                    const recField = isFundamental ? 'rb' : 'rt';
+
+                    tr.className = "hover:bg-slate-50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="p-5 font-black text-fmm-dark text-xs">${sub.nome}</td>
+                        <td class="p-3 text-center">${renderInput(sub.sigla, 'p1', g.p1, 'BCC')}</td>
+                        <td class="p-3 text-center">${renderInput(sub.sigla, 'p2', g.p2, 'BCC')}</td>
+                        <td class="p-3 text-center font-bold text-slate-400 bg-slate-50">${mp.toFixed(1)}</td>
+                        <td class="p-3 text-center border-r">${renderInput(sub.sigla, recField, recVal, 'BCC')}</td>
+                        <td class="p-3 text-center font-black text-base ${totalVal < 6 ? 'text-red-600' : 'text-fmm-blue'}">${Number(totalVal).toFixed(1)}</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -486,35 +523,49 @@
                 renderTable();
                 calculateGlobalAverage();
                 document.getElementById('syncIndicator').classList.add('hidden');
-                showToast("Dada atualizado");
+                showToast("Alteração Sincronizada");
             }, 800);
         }
 
         async function saveGrade(sigla, field, val, type) {
-            const table = type === 'BCC' ? 'notas_basica' : (type === 'ANUAL' ? 'anual_basica' : 'notas_tecnica');
-            const conflict = type === 'ANUAL' ? 'id_matricula,sigla_disciplina' : 'id_matricula,sigla_disciplina,periodo';
+            const isFundamental = currentStudent.nivel === 'EF1' || currentStudent.nivel === 'EF2';
+            
+            let table, conflict;
+            if (isFundamental) {
+                table = type === 'ANUAL' ? 'anual_fundamental' : 'notas_fundamental';
+                conflict = type === 'ANUAL' ? 'id_matricula,sigla_disciplina' : 'id_matricula,sigla_disciplina,periodo';
+            } else {
+                table = type === 'BCC' ? 'notas_basica' : (type === 'ANUAL' ? 'anual_basica' : 'notas_tecnica');
+                conflict = type === 'ANUAL' ? 'id_matricula,sigla_disciplina' : 'id_matricula,sigla_disciplina,periodo';
+            }
             
             const payload = { 
                 id_matricula: currentStudent.id, 
                 sigla_disciplina: sigla, 
-                [field]: val 
+                [field]: val,
+                alterado_pela_coordenacao: true
             };
             
-            if (type === 'BCC') payload.periodo = currentView;
-            if (type === 'TEC') payload.periodo = (currentView === '1_SEMESTRE_TEC' ? '1_SEMESTRE' : '2_SEMESTRE');
+            if (type !== 'ANUAL') {
+                if (type === 'TEC') {
+                    payload.periodo = (currentView === '1_SEMESTRE_TEC' ? '1_SEMESTRE' : '2_SEMESTRE');
+                } else {
+                    payload.periodo = currentView;
+                }
+            }
 
             const { error } = await window.supabaseClient.from(table).upsert(payload, { onConflict: conflict });
-            if (error) alert("Erro ao salvar: " + error.message);
+            if (error) console.error("Erro ao salvar:", error);
         }
 
         function calculateGlobalAverage() {
-            if (!currentStudent) return;
+            if (!currentStudent || !currentStudent.grades.ANUAL) return;
             const grades = currentStudent.grades.ANUAL;
             if (grades.length === 0) {
                 document.getElementById('globalAverage').innerText = "0.0";
                 return;
             }
-            const sum = grades.reduce((acc, curr) => acc + curr.media_final, 0);
+            const sum = grades.reduce((acc, curr) => acc + Number(curr.media_final || 0), 0);
             const avg = sum / grades.length;
             const el = document.getElementById('globalAverage');
             el.innerText = avg.toFixed(1);

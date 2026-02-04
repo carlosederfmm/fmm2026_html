@@ -175,8 +175,6 @@
     </div>
 
     <script>
-        // TASK 3.2.1: supabaseClient agora é global vindo de ../assets/js/supabase_client.js
-
         let currentUser = null;
         let globalMatriculas = [];
         let localPresenceState = {};
@@ -204,8 +202,6 @@
             await populateSelectors();
             lucide.createIcons();
         }
-
-        function toggleSidebar() { if(window.SidebarComponent) SidebarComponent.toggleSidebar(); }
 
         async function populateSelectors() {
             const selectT = document.getElementById('selectTurma');
@@ -250,12 +246,37 @@
             document.getElementById('table-wrapper').classList.add('hidden');
 
             try {
-                const { data: matriculas } = await window.supabaseClient.from('matriculas')
-                    .select('ra_aluno, alunos(nome_completo, url_foto)')
+                // --- LÓGICA DE SUBTURMA (INGLÊS) ---
+                const { data: discInfo } = await window.supabaseClient.from('disciplinas').select('nome').eq('sigla', currentDiscSigla).maybeSingle();
+                const isIngles = currentDiscSigla === 'L.ING' || discInfo?.nome?.toUpperCase().includes('INGLÊS');
+
+                let matriculasQuery = window.supabaseClient.from('matriculas')
+                    .select('ra_aluno, alunos!inner(nome_completo, url_foto, id_subturma_ingles)')
                     .eq('id_turma', currentTurmaId)
                     .eq('status', 'CURSANDO')
                     .eq('ano_letivo', 2026);
-                
+
+                if (isIngles && currentUser.cargo === 'professor') {
+                    const { data: subturma } = await window.supabaseClient.from('subturmas')
+                        .select('id')
+                        .eq('id_turma_origem', currentTurmaId)
+                        .eq('id_professor', currentUser.id)
+                        .maybeSingle();
+                    
+                    if (subturma) {
+                        matriculasQuery = matriculasQuery.eq('alunos.id_subturma_ingles', subturma.id);
+                    } else {
+                        // Se for professor de Inglês mas não tiver subturma para esta turma, não carrega alunos.
+                        globalMatriculas = [];
+                        renderTable();
+                        document.getElementById('table-wrapper').classList.remove('hidden');
+                        document.getElementById('btnSave').classList.remove('hidden');
+                        document.getElementById('loading-overlay').classList.add('hidden');
+                        return;
+                    }
+                }
+
+                const { data: matriculas } = await matriculasQuery;
                 globalMatriculas = matriculas || [];
                 globalMatriculas.sort((a, b) => (a.alunos?.nome_completo || "").localeCompare((b.alunos?.nome_completo || "")));
 
@@ -292,6 +313,11 @@
             if (tempos === 1) headHTML += `<th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest">Controle de Frequência</th>`;
             else headHTML += `<th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest border-r border-white/10">Tempo 1</th><th class="px-8 py-6 sticky-header text-center text-white text-[10px] font-black uppercase tracking-widest">Tempo 2</th>`;
             header.innerHTML = headHTML + `</tr>`;
+
+            if (globalMatriculas.length === 0) {
+                body.innerHTML = `<tr><td colspan="${tempos === 1 ? 2 : 3}" class="px-8 py-20 text-center text-slate-300 italic">Nenhum aluno vinculado a este grupo.</td></tr>`;
+                return;
+            }
 
             body.innerHTML = globalMatriculas.map(m => {
                 const p = localPresenceState[m.ra_aluno];
@@ -351,7 +377,7 @@
         function openPhotoModal(url, name) { document.getElementById('enlargedPhoto').src = url; document.getElementById('enlargedName').innerText = name; document.getElementById('photoModal').classList.remove('hidden'); }
         function closePhotoModal() { document.getElementById('photoModal').classList.add('hidden'); }
         function showToast(msg) { const t = document.getElementById('toast'); document.getElementById('toast-msg').innerText = msg; t.classList.replace('opacity-0', 'opacity-100'); t.classList.replace('translate-y-20', 'translate-y-0'); setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); t.classList.replace('translate-y-0', 'translate-y-20'); }, 2500); }
-        async function logout() { if(confirm("Deseja sair?")) { await window.supabaseClient.auth.signOut(); window.location.href = "../index.html"; } }
+        
         window.onload = init;
     </script>
 </body>

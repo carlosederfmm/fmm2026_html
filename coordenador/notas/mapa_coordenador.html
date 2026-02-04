@@ -169,7 +169,7 @@
                         </div>
                         
                         <div class="relative group flex-1 sm:flex-none min-w-[140px]">
-                            <i data-lucide="search" class="absolute left-3 top-2.5 w-3 h-3 text-slate-400"></i>
+                            <i data-lucide="search" class="absolute left-4 top-2.5 w-3 h-3 text-slate-400"></i>
                             <input type="text" id="searchInput" placeholder="Buscar aluno..." class="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 text-xs font-medium rounded-lg focus:ring-2 focus:ring-fmm-blue outline-none transition-all" onkeyup="handleSearch(this.value)">
                         </div>
                     </div>
@@ -183,15 +183,10 @@
                     
                     <div class="h-6 w-px bg-slate-200 hidden sm:block"></div>
 
-                    <!-- Navegação Compacta -->
-                    <div class="flex bg-slate-100 p-1 rounded-lg gap-0.5 border border-slate-200 overflow-x-auto no-scrollbar">
+                    <!-- Navegação Compacta (Dinâmica) -->
+                    <div id="periodNavigation" class="flex bg-slate-100 p-1 rounded-lg gap-0.5 border border-slate-200 overflow-x-auto no-scrollbar">
                         <button onclick="switchPeriod('anual')" id="btn-anual" class="view-btn px-3 py-1.5 rounded-md text-[10px] font-black uppercase transition-all bg-fmm-blue text-white shadow-sm">Anual</button>
-                        <button onclick="switchPeriod('1_TRIMESTRE')" id="btn-1_TRIMESTRE" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase text-slate-500 hover:text-fmm-blue">1T</button>
-                        <button onclick="switchPeriod('2_TRIMESTRE')" id="btn-2_TRIMESTRE" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase text-slate-500 hover:text-fmm-blue">2T</button>
-                        <button onclick="switchPeriod('3_TRIMESTRE')" id="btn-3_TRIMESTRE" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase text-slate-500 hover:text-fmm-blue">3T</button>
-                        <div class="w-px bg-slate-300 mx-1 h-3 self-center"></div>
-                        <button onclick="switchPeriod('1_SEMESTRE_TEC')" id="btn-1_SEMESTRE_TEC" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase text-slate-500 hover:text-fmm-green flex items-center gap-1"><i data-lucide="cpu" class="w-3 h-3"></i>1S</button>
-                        <button onclick="switchPeriod('2_SEMESTRE_TEC')" id="btn-2_SEMESTRE_TEC" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase text-slate-500 hover:text-fmm-green flex items-center gap-1"><i data-lucide="cpu" class="w-3 h-3"></i>2S</button>
+                        <!-- Injetado via JS dependendo do nível -->
                     </div>
                 </div>
             </div>
@@ -205,7 +200,7 @@
                 <p class="text-fmm-dark font-black text-[10px] uppercase tracking-widest animate-pulse">Carregando...</p>
             </div>
 
-            <!-- CONTAINER DA TABELA (Sem padding excessivo, foco nos dados) -->
+            <!-- CONTAINER DA TABELA (Foco nos dados) -->
             <div class="flex-1 overflow-auto custom-scrollbar bg-white rounded-2xl shadow-lg border border-slate-200 relative">
                 <table class="text-[11px] text-left border-separate border-spacing-0 w-max min-w-full">
                     <thead id="tableHeader" class="z-30"></thead>
@@ -224,7 +219,7 @@
         </main>
     </main>
 
-    <!-- MODAL DE DETALHES (Mantido funcional, layout ajustado) -->
+    <!-- MODAL DE DETALHES -->
     <div id="studentDetailModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center modal-backdrop p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-ui overflow-hidden border border-white/20">
             <!-- Header Compacto -->
@@ -247,39 +242,25 @@
 
             <!-- Corpo -->
             <div class="flex-1 overflow-auto p-6 bg-slate-50/50 custom-scrollbar space-y-6">
-                <!-- Tabelas -->
                 <div class="space-y-6">
-                    <!-- BÁSICA -->
+                    <!-- ÁREA BÁSICA (Dinamizada para Bimestres) -->
                     <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
                         <div class="bg-slate-50 px-4 py-2 border-b border-slate-100 flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-fmm-blue"></span>
-                            <h3 class="text-[10px] font-black text-fmm-dark uppercase tracking-widest">Ensino Básico</h3>
+                            <h3 id="modalBasicLabel" class="text-[10px] font-black text-fmm-dark uppercase tracking-widest">Ensino Básico</h3>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-xs text-left border-collapse whitespace-nowrap">
-                                <thead class="bg-white text-[9px] font-black uppercase tracking-widest border-b border-slate-100 text-slate-500">
-                                    <tr>
-                                        <th class="p-3 border-r w-48 sticky left-0 bg-white z-10">Disciplina</th>
-                                        <th class="p-2 text-center bg-blue-50/30 border-r" colspan="4">1º Tri</th>
-                                        <th class="p-2 text-center bg-indigo-50/30 border-r" colspan="4">2º Tri</th>
-                                        <th class="p-2 text-center bg-purple-50/30 border-r" colspan="4">3º Tri</th>
-                                        <th class="p-2 text-center bg-fmm-dark text-white" colspan="3">Final</th>
-                                    </tr>
-                                    <tr class="text-[8px]">
-                                        <th class="border-r bg-white sticky left-0 z-10"></th>
-                                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RT</th><th class="p-1 text-center font-bold border-r">NT</th>
-                                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RT</th><th class="p-1 text-center font-bold border-r">NT</th>
-                                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RT</th><th class="p-1 text-center font-bold border-r">NT</th>
-                                        <th class="p-1 text-center bg-slate-100 font-bold">ANUAL</th><th class="p-1 text-center bg-slate-100 text-orange-600 font-bold">REC</th><th class="p-1 text-center bg-fmm-dark text-white font-bold">MF</th>
-                                    </tr>
+                                <thead id="modalBasicHead" class="bg-white text-[9px] font-black uppercase tracking-widest border-b border-slate-100 text-slate-500">
+                                    <!-- Dinâmico -->
                                 </thead>
                                 <tbody id="modalGradesBody" class="divide-y divide-slate-50"></tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- TÉCNICA -->
-                    <div class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
+                    <!-- ÁREA TÉCNICA (Oculta se for Fundamental) -->
+                    <div id="modalTechContainer" class="bg-white shadow-sm rounded-2xl overflow-hidden border border-slate-200">
                         <div class="bg-slate-50 px-4 py-2 border-b border-slate-100 flex items-center gap-2">
                             <span class="w-2 h-2 rounded-full bg-fmm-green"></span>
                             <h3 class="text-[10px] font-black text-fmm-dark uppercase tracking-widest">Ensino Técnico</h3>
@@ -313,15 +294,13 @@
     </div>
 
     <script>
-        /**
-         * LÓGICA DO MAPA GERAL FMM 2026 (MANTIDA ESTÁVEL)
-         */
         let basicSubjects = [];
         let techSubjects = [];
         let currentClassData = [];
         let currentView = 'anual';
         let showRiskOnly = false;
         let searchTimeout = null;
+        let isFundamental = false;
 
         const TECH_CURRICULUM = {
             '1ª Série': { 1: ['AMC', 'CEI', 'PC', 'TM'], 2: ['CE', 'M3DMA', 'PMF', 'POO', 'DP'] },
@@ -341,7 +320,7 @@
         }
 
         async function init() {
-            if(window.SidebarComponent) await SidebarComponent.render('sidebar-container');
+            if(window.SidebarComponent) await window.SidebarComponent.render('sidebar-container');
             const { data: { user } } = await window.supabaseClient.auth.getUser();
             if (!user) return window.location.href = '../../index.html';
 
@@ -359,6 +338,7 @@
                     opt.value = t.id;
                     opt.innerText = t.nome;
                     opt.dataset.serie = t.serie;
+                    opt.dataset.nivel = t.nivel;
                     select.appendChild(opt);
                 });
             }
@@ -369,13 +349,42 @@
             techSubjects = visibleDiscs.filter(d => d.tipo === 'Técnica').map(d => ({ ...d, shortName: d.sigla }));
         }
 
+        function updatePeriodNavigation() {
+            const nav = document.getElementById('periodNavigation');
+            const sel = document.getElementById('classSelector');
+            const nivel = sel.options[sel.selectedIndex]?.dataset.nivel || '';
+            isFundamental = (nivel === 'EF1' || nivel === 'EF2');
+
+            let html = `<button onclick="switchPeriod('anual')" id="btn-anual" class="view-btn px-3 py-1.5 rounded-md text-[10px] font-black uppercase transition-all ${currentView === 'anual' ? 'bg-fmm-blue text-white shadow-sm' : 'text-slate-500 hover:text-fmm-blue'}">Anual</button>`;
+            
+            if (isFundamental) {
+                const bim = ['1_BIMESTRE', '2_BIMESTRE', '3_BIMESTRE', '4_BIMESTRE'];
+                bim.forEach((b, i) => {
+                    const active = currentView === b ? 'bg-fmm-blue text-white shadow-sm' : 'text-slate-500 hover:text-fmm-blue';
+                    html += `<button onclick="switchPeriod('${b}')" id="btn-${b}" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase transition-all ${active}">${i+1}B</button>`;
+                });
+            } else {
+                const tri = ['1_TRIMESTRE', '2_TRIMESTRE', '3_TRIMESTRE'];
+                tri.forEach((t, i) => {
+                    const active = currentView === t ? 'bg-fmm-blue text-white shadow-sm' : 'text-slate-500 hover:text-fmm-blue';
+                    html += `<button onclick="switchPeriod('${t}')" id="btn-${t}" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase transition-all ${active}">${i+1}T</button>`;
+                });
+                html += `<div class="w-px bg-slate-300 mx-1 h-3 self-center"></div>`;
+                html += `<button onclick="switchPeriod('1_SEMESTRE_TEC')" id="btn-1_SEMESTRE_TEC" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase transition-all ${currentView === '1_SEMESTRE_TEC' ? 'bg-fmm-green text-white shadow-sm' : 'text-slate-500 hover:text-fmm-green'} flex items-center gap-1"><i data-lucide="cpu" class="w-3 h-3"></i>1S</button>`;
+                html += `<button onclick="switchPeriod('2_SEMESTRE_TEC')" id="btn-2_SEMESTRE_TEC" class="view-btn px-2 py-1.5 rounded-md text-[10px] font-black uppercase transition-all ${currentView === '2_SEMESTRE_TEC' ? 'bg-fmm-green text-white shadow-sm' : 'text-slate-500 hover:text-fmm-green'} flex items-center gap-1"><i data-lucide="cpu" class="w-3 h-3"></i>2S</button>`;
+            }
+            nav.innerHTML = html;
+            lucide.createIcons();
+        }
+
         async function loadClassMap() {
             const classId = document.getElementById('classSelector').value;
             if (!classId) return;
 
+            updatePeriodNavigation();
+
             const loader = document.getElementById('loadingOverlay');
             const empty = document.getElementById('emptyState');
-            
             loader.classList.remove('hidden');
             empty.classList.add('hidden');
 
@@ -384,46 +393,72 @@
                     .select('id, ra_aluno, alunos(ra, nome_completo, url_foto)')
                     .eq('id_turma', classId).eq('status', 'CURSANDO').eq('ano_letivo', 2026);
 
-                if (!matriculas || matriculas.length === 0) throw new Error("Sem alunos.");
+                if (!matriculas || matriculas.length === 0) throw new Error("Sem alunos registrados.");
                 matriculas.sort((a, b) => (a.alunos?.nome_completo || "").localeCompare(b.alunos?.nome_completo || ""));
                 
                 const ids = matriculas.map(m => m.id);
-                const [{ data: nbT }, { data: nbA }, { data: ntT }] = await Promise.all([
-                    window.supabaseClient.from('notas_basica').select('*').in('id_matricula', ids),
-                    window.supabaseClient.from('anual_basica').select('*').in('id_matricula', ids),
-                    window.supabaseClient.from('notas_tecnica').select('*').in('id_matricula', ids)
-                ]);
+
+                let fetchPromises = [];
+                if (isFundamental) {
+                    fetchPromises = [
+                        window.supabaseClient.from('notas_fundamental').select('*').in('id_matricula', ids),
+                        window.supabaseClient.from('anual_fundamental').select('*').in('id_matricula', ids),
+                        Promise.resolve({ data: [] }) // Dummy TEC
+                    ];
+                } else {
+                    fetchPromises = [
+                        window.supabaseClient.from('notas_basica').select('*').in('id_matricula', ids),
+                        window.supabaseClient.from('anual_basica').select('*').in('id_matricula', ids),
+                        window.supabaseClient.from('notas_tecnica').select('*').in('id_matricula', ids)
+                    ];
+                }
+
+                const [resNotas, resAnual, resTech] = await Promise.all(fetchPromises);
 
                 currentClassData = matriculas.map(m => {
                     const student = { id: m.id, ra: m.alunos.ra, nome: m.alunos.nome_completo, foto: m.alunos.url_foto, gradesBCC: {}, gradesTEC: {} };
+                    
                     basicSubjects.forEach(s => {
-                        const an = (nbA || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla) || {};
-                        const t1 = (nbT || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && x.periodo === '1_TRIMESTRE') || {};
-                        const t2 = (nbT || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && x.periodo === '2_TRIMESTRE') || {};
-                        const t3 = (nbT || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && x.periodo === '3_TRIMESTRE') || {};
-                        student.gradesBCC[s.sigla] = { t1: t1.nt, t2: t2.nt, t3: t3.nt, anual: an.media_final, raw: { t1, t2, t3, an } };
+                        const an = (resAnual.data || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla) || {};
+                        const n1 = (resNotas.data || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && (isFundamental ? x.periodo === '1_BIMESTRE' : x.periodo === '1_TRIMESTRE')) || {};
+                        const n2 = (resNotas.data || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && (isFundamental ? x.periodo === '2_BIMESTRE' : x.periodo === '2_TRIMESTRE')) || {};
+                        const n3 = (resNotas.data || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && (isFundamental ? x.periodo === '3_BIMESTRE' : x.periodo === '3_TRIMESTRE')) || {};
+                        const n4 = isFundamental ? (resNotas.data || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && x.periodo === '4_BIMESTRE') || {} : null;
+
+                        student.gradesBCC[s.sigla] = { 
+                            p1: n1[isFundamental ? 'nb' : 'nt'], 
+                            p2: n2[isFundamental ? 'nb' : 'nt'], 
+                            p3: n3[isFundamental ? 'nb' : 'nt'], 
+                            p4: n4 ? n4.nb : null,
+                            anual: an.media_final, 
+                            raw: { n1, n2, n3, n4, an } 
+                        };
                     });
-                    techSubjects.forEach(s => {
-                        const s1 = (ntT || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && x.periodo === '1_SEMESTRE') || {};
-                        const s2 = (ntT || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && x.periodo === '2_SEMESTRE') || {};
-                        student.gradesTEC[s.sigla] = { s1: s1.nota_final_periodo, s2: s2.nota_final_periodo, raw: { s1, s2 } };
-                    });
+
+                    if (!isFundamental) {
+                        techSubjects.forEach(s => {
+                            const s1 = (resTech.data || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && x.periodo === '1_SEMESTRE') || {};
+                            const s2 = (resTech.data || []).find(x => x.id_matricula === m.id && x.sigla_disciplina === s.sigla && x.periodo === '2_SEMESTRE') || {};
+                            student.gradesTEC[s.sigla] = { s1: s1.nota_final_periodo, s2: s2.nota_final_periodo, raw: { s1, s2 } };
+                        });
+                    }
                     return student;
                 });
                 renderTable();
-            } catch (err) { alert(err.message); empty.classList.remove('hidden'); }
+            } catch (err) { console.error(err); empty.classList.remove('hidden'); }
             finally { loader.classList.add('hidden'); lucide.createIcons(); }
         }
 
         function renderTable() {
             const thead = document.getElementById('tableHeader');
             const tbody = document.getElementById('tableBody');
-            const currentSerie = document.getElementById('classSelector').options[document.getElementById('classSelector').selectedIndex]?.dataset.serie || '1ª Série';
+            const sel = document.getElementById('classSelector');
+            const currentSerie = sel.options[sel.selectedIndex]?.dataset.serie || '1ª Série';
 
             let columns = [];
-            const isTech = currentView.includes('SEMESTRE_TEC');
+            const isViewTech = currentView.includes('SEMESTRE_TEC');
 
-            if (!isTech) {
+            if (!isViewTech) {
                 columns = basicSubjects.map(s => ({ id: s.sigla, label: s.shortName, tooltip: s.nome, isTech: false }));
             } else {
                 const sem = currentView === '1_SEMESTRE_TEC' ? 1 : 2;
@@ -440,10 +475,15 @@
             thead.innerHTML = headHTML + `</tr>`;
 
             let bodyHTML = '';
-            currentClassData.forEach((student, idx) => {
+            currentClassData.forEach((student) => {
                 if (showRiskOnly) {
                     const hasRisk = columns.some(col => {
-                        let val = col.isTech ? student.gradesTEC[col.id]?.[currentView === '1_SEMESTRE_TEC' ? 's1' : 's2'] : student.gradesBCC[col.id]?.[currentView === 'anual' ? 'anual' : currentView === '1_TRIMESTRE' ? 't1' : currentView === '2_TRIMESTRE' ? 't2' : 't3'];
+                        let val = 0;
+                        if (col.isTech) val = student.gradesTEC[col.id]?.[currentView === '1_SEMESTRE_TEC' ? 's1' : 's2'];
+                        else {
+                            const mapping = { 'anual': 'anual', '1_TRIMESTRE': 'p1', '2_TRIMESTRE': 'p2', '3_TRIMESTRE': 'p3', '1_BIMESTRE': 'p1', '2_BIMESTRE': 'p2', '3_BIMESTRE': 'p3', '4_BIMESTRE': 'p4' };
+                            val = student.gradesBCC[col.id]?.[mapping[currentView]];
+                        }
                         return val > 0 && val < 6.0;
                     });
                     if (!hasRisk) return;
@@ -455,20 +495,25 @@
                     <td class="sticky-col-aluno px-3 py-2 font-bold text-fmm-dark">
                         <div class="flex items-center gap-2">
                             <img src="${avatar}" class="w-8 h-8 rounded-lg object-cover bg-white shadow-sm border border-slate-100 flex-shrink-0">
-                            <button onclick="openStudentDetails('${student.id}')" class="hover:text-fmm-blue hover:underline text-left truncate flex-1 tracking-tight text-[11px] md:text-xs">
+                            <button onclick="openStudentDetails('${student.id}')" class="hover:text-fmm-blue hover:underline text-left truncate flex-1 tracking-tight text-[11px] md:text-xs uppercase">
                                 ${student.nome}
                             </button>
                         </div>
                     </td>`;
 
                 columns.forEach(col => {
-                    let val = col.isTech ? student.gradesTEC[col.id]?.[currentView === '1_SEMESTRE_TEC' ? 's1' : 's2'] : student.gradesBCC[col.id]?.[currentView === 'anual' ? 'anual' : currentView === '1_TRIMESTRE' ? 't1' : currentView === '2_TRIMESTRE' ? 't2' : 't3'];
+                    let val = 0;
+                    if (col.isTech) val = student.gradesTEC[col.id]?.[currentView === '1_SEMESTRE_TEC' ? 's1' : 's2'];
+                    else {
+                        const mapping = { 'anual': 'anual', '1_TRIMESTRE': 'p1', '2_TRIMESTRE': 'p2', '3_TRIMESTRE': 'p3', '1_BIMESTRE': 'p1', '2_BIMESTRE': 'p2', '3_BIMESTRE': 'p3', '4_BIMESTRE': 'p4' };
+                        val = student.gradesBCC[col.id]?.[mapping[currentView]];
+                    }
                     const color = (val > 0 && val < 6.0) ? 'risk-alert' : (val >= 6.0 ? 'text-fmm-blue font-black' : 'text-slate-300 font-medium');
                     bodyHTML += `<td class="grade-cell text-center font-mono text-[11px] ${color}">${(val > 0) ? Number(val).toFixed(1) : '-'}</td>`;
                 });
                 bodyHTML += `</tr>`;
             });
-            tbody.innerHTML = bodyHTML || `<tr><td colspan="${columns.length + 2}" class="p-10 text-center text-slate-300 italic">Sem dados.</td></tr>`;
+            tbody.innerHTML = bodyHTML || `<tr><td colspan="${columns.length + 2}" class="p-10 text-center text-slate-300 italic">Nenhum registro encontrado.</td></tr>`;
         }
 
         function toggleRiskFilter() {
@@ -482,10 +527,13 @@
 
         function switchPeriod(p) {
             currentView = p;
-            document.querySelectorAll('.view-btn').forEach(b => b.className = "view-btn px-2 sm:px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase text-slate-400 hover:bg-white hover:text-fmm-blue transition-all");
-            const active = document.getElementById(`btn-${p}`);
-            const colorClass = p.includes('TEC') ? 'bg-fmm-green' : 'bg-fmm-blue';
-            active.className = `view-btn px-2 sm:px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all shadow-sm ${colorClass} text-white`;
+            document.querySelectorAll('.view-btn').forEach(b => {
+                b.className = "view-btn px-2 sm:px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase text-slate-400 hover:bg-white hover:text-fmm-blue transition-all";
+                if(b.id === `btn-${p}`) {
+                    const colorClass = p.includes('TEC') ? 'bg-fmm-green' : 'bg-fmm-blue';
+                    b.className = `view-btn px-2 sm:px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all shadow-sm ${colorClass} text-white`;
+                }
+            });
             renderTable();
         }
 
@@ -508,31 +556,92 @@
             document.getElementById('modalStudentClass').innerText = document.getElementById('classSelector').options[document.getElementById('classSelector').selectedIndex].text;
             document.getElementById('modalAvatar').src = formatDriveUrl(student.foto) || `https://ui-avatars.com/api/?name=${encodeURIComponent(student.nome)}&background=random`;
 
+            // Configura modal labels
+            document.getElementById('modalBasicLabel').innerText = isFundamental ? 'Ensino Fundamental (Bimestres)' : 'Ensino Médio (Trimestres)';
+            const headB = document.getElementById('modalBasicHead');
+            
+            if (isFundamental) {
+                headB.innerHTML = `
+                    <tr>
+                        <th class="p-3 border-r w-48 sticky left-0 bg-white z-10">Disciplina</th>
+                        <th class="p-2 text-center bg-blue-50/30 border-r" colspan="4">1º Bim</th>
+                        <th class="p-2 text-center bg-indigo-50/30 border-r" colspan="4">2º Bim</th>
+                        <th class="p-2 text-center bg-purple-50/30 border-r" colspan="4">3º Bim</th>
+                        <th class="p-2 text-center bg-green-50/30 border-r" colspan="4">4º Bim</th>
+                        <th class="p-2 text-center bg-fmm-dark text-white" colspan="3">Final</th>
+                    </tr>
+                    <tr class="text-[8px]">
+                        <th class="border-r bg-white sticky left-0 z-10"></th>
+                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RB</th><th class="p-1 text-center font-bold border-r">NB</th>
+                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RB</th><th class="p-1 text-center font-bold border-r">NB</th>
+                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RB</th><th class="p-1 text-center font-bold border-r">NB</th>
+                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RB</th><th class="p-1 text-center font-bold border-r">NB</th>
+                        <th class="p-1 text-center bg-slate-100 font-bold">ANUAL</th><th class="p-1 text-center bg-slate-100 text-orange-600 font-bold">REC</th><th class="p-1 text-center bg-fmm-dark text-white font-bold">MF</th>
+                    </tr>`;
+            } else {
+                headB.innerHTML = `
+                    <tr>
+                        <th class="p-3 border-r w-48 sticky left-0 bg-white z-10">Disciplina</th>
+                        <th class="p-2 text-center bg-blue-50/30 border-r" colspan="4">1º Tri</th>
+                        <th class="p-2 text-center bg-indigo-50/30 border-r" colspan="4">2º Tri</th>
+                        <th class="p-2 text-center bg-purple-50/30 border-r" colspan="4">3º Tri</th>
+                        <th class="p-2 text-center bg-fmm-dark text-white" colspan="3">Final</th>
+                    </tr>
+                    <tr class="text-[8px]">
+                        <th class="border-r bg-white sticky left-0 z-10"></th>
+                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RT</th><th class="p-1 text-center font-bold border-r">NT</th>
+                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RT</th><th class="p-1 text-center font-bold border-r">NT</th>
+                        <th class="p-1 text-center">P1</th><th class="p-1 text-center">P2</th><th class="p-1 text-center">RT</th><th class="p-1 text-center font-bold border-r">NT</th>
+                        <th class="p-1 text-center bg-slate-100 font-bold">ANUAL</th><th class="p-1 text-center bg-slate-100 text-orange-600 font-bold">REC</th><th class="p-1 text-center bg-fmm-dark text-white font-bold">MF</th>
+                    </tr>`;
+            }
+
             const tbodyB = document.getElementById('modalGradesBody');
             tbodyB.innerHTML = Object.entries(student.gradesBCC).map(([sigla, g]) => {
-                const fmt = (v) => (v > 0) ? Number(v).toFixed(1) : '-';
+                const sub = basicSubjects.find(s => s.sigla === sigla);
+                const fmt = (v) => (v !== null && v !== undefined && v !== 0) ? Number(v).toFixed(1) : '-';
                 const cls = (v) => (v > 0 && v < 6.0) ? 'text-red-500 font-black' : (v >= 6.0 ? 'text-fmm-blue font-bold' : 'text-slate-300');
-                const d = basicSubjects.find(s => s.sigla === sigla);
-                return `<tr><td class="p-3 font-bold text-fmm-dark text-[11px] border-r sticky left-0 bg-white">${d?.nome || sigla}</td><td class="p-1 text-center text-slate-500 font-mono">${fmt(g.raw.t1?.p1)}</td><td class="p-1 text-center text-slate-500 font-mono">${fmt(g.raw.t1?.p2)}</td><td class="p-1 text-center text-orange-400 italic font-mono">${fmt(g.raw.t1?.rt)}</td><td class="p-1 text-center border-r bg-blue-50/30 ${cls(g.t1)}">${fmt(g.t1)}</td><td class="p-1 text-center text-slate-500 font-mono">${fmt(g.raw.t2?.p1)}</td><td class="p-1 text-center text-slate-500 font-mono">${fmt(g.raw.t2?.p2)}</td><td class="p-1 text-center text-orange-400 italic font-mono">${fmt(g.raw.t2?.rt)}</td><td class="p-1 text-center border-r bg-indigo-50/30 ${cls(g.t2)}">${fmt(g.t2)}</td><td class="p-1 text-center text-slate-500 font-mono">${fmt(g.raw.t3?.p1)}</td><td class="p-1 text-center text-slate-500 font-mono">${fmt(g.raw.t3?.p2)}</td><td class="p-1 text-center text-orange-400 italic font-mono">${fmt(g.raw.t3?.rt)}</td><td class="p-1 text-center border-r bg-purple-50/30 ${cls(g.t3)}">${fmt(g.t3)}</td><td class="p-1 text-center bg-slate-100/50 font-bold">${fmt(g.raw.an?.media_anual)}</td><td class="p-1 text-center bg-slate-100/50 text-orange-600 font-bold">${fmt(g.raw.an?.recup_final)}</td><td class="p-1 text-center bg-fmm-dark text-white font-black text-xs">${fmt(g.anual)}</td></tr>`;
+                
+                let row = `<tr><td class="p-3 font-bold text-fmm-dark text-[11px] border-r sticky left-0 bg-white uppercase">${sub?.nome || sigla}</td>`;
+                
+                const steps = isFundamental ? ['n1','n2','n3','n4'] : ['n1','n2','n3'];
+                steps.forEach(sKey => {
+                    const n = g.raw[sKey] || {};
+                    row += `<td class="p-1 text-center text-slate-500 font-mono">${fmt(n.p1)}</td>
+                            <td class="p-1 text-center text-slate-500 font-mono">${fmt(n.p2)}</td>
+                            <td class="p-1 text-center text-orange-400 italic font-mono">${fmt(n[isFundamental ? 'rb' : 'rt'])}</td>
+                            <td class="p-1 text-center border-r bg-blue-50/10 ${cls(n[isFundamental ? 'nb' : 'nt'])}">${fmt(n[isFundamental ? 'nb' : 'nt'])}</td>`;
+                });
+
+                row += `<td class="p-1 text-center bg-slate-100/50 font-bold">${fmt(g.raw.an?.media_anual)}</td>
+                        <td class="p-1 text-center bg-slate-100/50 text-orange-600 font-bold">${fmt(g.raw.an?.recup_final)}</td>
+                        <td class="p-1 text-center bg-fmm-dark text-white font-black text-xs">${fmt(g.anual)}</td></tr>`;
+                return row;
             }).join('');
 
+            const techCont = document.getElementById('modalTechContainer');
             const tbodyT = document.getElementById('modalTechBody');
-            const tecs = Object.entries(student.gradesTEC).filter(([_, g]) => g.s1 > 0 || g.s2 > 0);
-            tbodyT.innerHTML = tecs.map(([sigla, g]) => {
-                const sub = techSubjects.find(s => s.sigla === sigla);
-                const fmt = (v) => (v > 0) ? Number(v).toFixed(1) : '-';
-                let r = '';
-                if(g.s1 > 0) r += `<tr class="hover:bg-slate-50 transition border-b"><td class="p-3 font-bold text-[11px] border-r text-fmm-dark">${sub?.nome}</td><td class="p-1 text-center border-r font-bold text-slate-400 text-[9px] uppercase">1º Sem</td><td class="p-1 text-center font-mono">${fmt(g.raw.s1.p1)}</td><td class="p-1 text-center font-mono">${fmt(g.raw.s1.p2)}</td><td class="p-1 text-center bg-blue-50/30 text-fmm-blue font-bold">${fmt(g.raw.s1.media_1)}</td><td class="p-1 text-center text-orange-500 font-mono">${fmt(g.raw.s1.recup_parcial)}</td><td class="p-1 text-center text-fmm-blue font-mono">${fmt(g.raw.s1.conselho_semestral)}</td><td class="p-1 text-center bg-orange-50/30 text-orange-600 font-mono">${fmt(g.raw.s1.recup_final_semestral)}</td><td class="p-2 text-center bg-slate-800 text-white font-black text-xs">${fmt(g.s1)}</td></tr>`;
-                if(g.s2 > 0) r += `<tr class="hover:bg-slate-50 transition border-b"><td class="p-3 font-bold text-[11px] border-r text-fmm-dark">${sub?.nome}</td><td class="p-1 text-center border-r font-bold text-slate-400 text-[9px] uppercase">2º Sem</td><td class="p-1 text-center font-mono">${fmt(g.raw.s2.p1)}</td><td class="p-1 text-center font-mono">${fmt(g.raw.s2.p2)}</td><td class="p-1 text-center bg-blue-50/30 text-fmm-blue font-bold">${fmt(g.raw.s2.media_1)}</td><td class="p-1 text-center text-orange-500 font-mono">${fmt(g.raw.s2.recup_parcial)}</td><td class="p-1 text-center text-fmm-blue font-mono">${fmt(g.raw.s2.conselho_semestral)}</td><td class="p-1 text-center bg-orange-50/30 text-orange-600 font-mono">${fmt(g.raw.s2.recup_final_semestral)}</td><td class="p-2 text-center bg-slate-800 text-white font-black text-xs">${fmt(g.s2)}</td></tr>`;
-                return r;
-            }).join('') || '<tr><td colspan="9" class="p-8 text-center text-slate-300 italic text-xs">Sem notas técnicas registradas.</td></tr>';
+            if (isFundamental) {
+                techCont.classList.add('hidden');
+            } else {
+                techCont.classList.remove('hidden');
+                const tecs = Object.entries(student.gradesTEC).filter(([_, g]) => (g.s1 || 0) > 0 || (g.s2 || 0) > 0);
+                tbodyT.innerHTML = tecs.map(([sigla, g]) => {
+                    const sub = techSubjects.find(s => s.sigla === sigla);
+                    const fmt = (v) => (v > 0) ? Number(v).toFixed(1) : '-';
+                    let r = '';
+                    if((g.s1 || 0) > 0 || (g.raw.s1?.p1 || 0) > 0) r += `<tr class="hover:bg-slate-50 transition border-b"><td class="p-3 font-bold text-[11px] border-r text-fmm-dark uppercase">${sub?.nome}</td><td class="p-1 text-center border-r font-bold text-slate-400 text-[9px] uppercase">1º Sem</td><td class="p-1 text-center font-mono">${fmt(g.raw.s1.p1)}</td><td class="p-1 text-center font-mono">${fmt(g.raw.s1.p2)}</td><td class="p-1 text-center bg-blue-50/30 text-fmm-blue font-bold">${fmt(g.raw.s1.media_1)}</td><td class="p-1 text-center text-orange-500 font-mono">${fmt(g.raw.s1.recup_parcial)}</td><td class="p-1 text-center text-fmm-blue font-mono">${fmt(g.raw.s1.conselho_semestral)}</td><td class="p-1 text-center bg-orange-50/30 text-orange-600 font-mono">${fmt(g.raw.s1.recup_final_semestral)}</td><td class="p-2 text-center bg-slate-800 text-white font-black text-xs">${fmt(g.s1)}</td></tr>`;
+                    if((g.s2 || 0) > 0 || (g.raw.s2?.p1 || 0) > 0) r += `<tr class="hover:bg-slate-50 transition border-b"><td class="p-3 font-bold text-[11px] border-r text-fmm-dark uppercase">${sub?.nome}</td><td class="p-1 text-center border-r font-bold text-slate-400 text-[9px] uppercase">2º Sem</td><td class="p-1 text-center font-mono">${fmt(g.raw.s2.p1)}</td><td class="p-1 text-center font-mono">${fmt(g.raw.s2.p2)}</td><td class="p-1 text-center bg-blue-50/30 text-fmm-blue font-bold">${fmt(g.raw.s2.media_1)}</td><td class="p-1 text-center text-orange-500 font-mono">${fmt(g.raw.s2.recup_parcial)}</td><td class="p-1 text-center text-fmm-blue font-mono">${fmt(g.raw.s2.conselho_semestral)}</td><td class="p-1 text-center bg-orange-50/30 text-orange-600 font-mono">${fmt(g.raw.s2.recup_final_semestral)}</td><td class="p-2 text-center bg-slate-800 text-white font-black text-xs">${fmt(g.s2)}</td></tr>`;
+                    return r;
+                }).join('') || '<tr><td colspan="9" class="p-8 text-center text-slate-300 italic text-xs uppercase">Sem notas técnicas vinculadas.</td></tr>';
+            }
 
             document.getElementById('studentDetailModal').classList.remove('hidden'); lucide.createIcons();
         }
 
         function closeStudentModal() { document.getElementById('studentDetailModal').classList.add('hidden'); }
         function toggleSidebar() { if(window.SidebarComponent) SidebarComponent.toggleSidebar(); }
-        async function logout() { if(confirm("Sair do sistema?")) { await window.supabaseClient.auth.signOut(); window.location.href = "../../index.html"; } }
+        async function logout() { if(confirm("Deseja sair do sistema?")) { await window.supabaseClient.auth.signOut(); window.location.href = "../../index.html"; } }
         window.onload = init;
     </script>
 </body>
